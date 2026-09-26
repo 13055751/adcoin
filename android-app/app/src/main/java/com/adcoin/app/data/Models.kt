@@ -49,6 +49,7 @@ data class SearchResult(
     val username: String? = null,
     val appUserId: String? = null,
     val playerName: String? = null,
+    val name: String? = null,
 )
 
 data class SearchResponse(

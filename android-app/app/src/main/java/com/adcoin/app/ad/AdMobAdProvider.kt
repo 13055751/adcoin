@@ -3,9 +3,9 @@ package com.adcoin.app.ad
 import android.app.Activity
 import com.adcoin.app.BuildConfig
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import java.util.UUID
@@ -33,7 +33,7 @@ class AdMobAdProvider : AdProvider {
             onError("未配置 AdMob 广告位（-P adcoin.admobRewardedUnit）")
             return
         }
-        MobileAds.loadRewardedAd(activity, adUnitId, object : RewardedAdLoadCallback() {
+        RewardedAd.load(activity, adUnitId, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(error: LoadAdError) {
                 onError("广告加载失败: ${error.message}")
             }
