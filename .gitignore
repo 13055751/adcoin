@@ -1,0 +1,17 @@
+target/
+*.class
+*.iml
+.idea/
+.vscode/
+.DS_Store
+adcoin-data.json
+
+# Android
+android-app/build/
+android-app/.gradle/
+android-app/local.properties
+
+# Backend
+backend/node_modules/
+backend/data/
+backend/.env

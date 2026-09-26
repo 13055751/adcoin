@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <!-- 项目专用：aliyun 镜像仅用于 central 等公共库，jitpack/extendedclip/papermc 直连 -->
+  <mirrors>
+    <mirror>
+      <id>aliyun</id>
+      <name>Aliyun Maven Mirror</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>*,!papermc,!jitpack,!extendedclip</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>

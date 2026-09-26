@@ -1,0 +1,108 @@
+# ============================================================
+#  AdCoin · 看广告赚取游戏内货币 · 配置文件
+#  修改后执行 /adcoin reload 生效（HTTP 端口/密钥变更会自动重启 API 服务）
+# ============================================================
+
+server:
+  # HTTP API 监听地址。该接口接受后端回调，请务必只对它可信：
+  #   - 后端与服务器同机：127.0.0.1（配合反向代理 / 内网）
+  #   - 云服务器：0.0.0.0 + 防火墙只放行后端服务器 IP，并配合 allowed-ips 白名单
+  host: 0.0.0.0
+  port: 17890
+  # 共享密钥：后端发起请求时必须用它做 HMAC-SHA256 签名（见 docs/api.md）。
+  # 必须改成随机长字符串（至少 32 位），并和后端保持一致！
+  api-key: "CHANGE-ME-PLEASE-USE-A-LONG-RANDOM-SECRET-STRING"
+  # 请求时间戳与服务器时间允许的最大偏差（秒），超出视为过期请求拒绝。
+  ts-window-seconds: 300
+  # 可选：只允许这些 IP 调用 API（留空 = 不限制）。
+  #   allowed-ips:
+  #     - "127.0.0.1"
+  #     - "192.168.1.10"
+  allowed-ips: []
+  # HTTP 客户端线程数（广告奖励是低频动作，默认 4 已足够）
+  threads: 4
+
+currency:
+  # 货币显示名（仅用于消息文本；数据内部统一按 UUID 记账）
+  name: "adcoins"
+  # 单笔奖励金额上限（防异常大额请求，超出直接拒绝）
+  max-amount: 100000.0
+  # 按广告单元（adUnitId）固定金额：命中时忽略请求里携带的 amount，
+  # 适合让服主决定"每个广告位值多少钱"（后端 SSV 仍会验真）。
+  ad-units:
+    # "ca-app-pub-123456/789012345": 50
+
+limits:
+  # 每玩家每天最多领取次数（0 = 不限），按服务器本地日期计。
+  daily-per-player: 20
+  # 绑定码
+  code-length: 8                 # 绑定码长度
+  code-ttl-seconds: 300          # 绑定码有效期（秒）
+  code-cooldown-seconds: 15      # 生成绑定码冷却时间（秒）
+  # 奖励账本最多保留条数（超出裁剪，防止数据文件无限增长）
+  ledger-max-entries: 5000
+
+economy:
+  # 可选：将奖励按百分比"镜像"到 Vault 主余额（需已安装 Vault + 经济插件）。
+  # 例如 percent: 10 时，每次奖励额外给主余额 10%（四舍五入取整）。
+  # 想直接发主余额做"主货币"也行：percent: 100
+  vault:
+    enabled: false
+    percent: 0
+
+social:
+  # 是否只允许"好友之间"转币/私聊（false=任意已知玩家）
+  require-friend: true
+  # 好友转币单次下限
+  transfer-min: 1
+
+messages:
+  prefix: "<gradient:#7CFC00:#FFA500>AdCoin</gradient> <dark_gray>»</dark_gray> <reset>"
+  link-created: |
+    <yellow>你的广告币绑定码：<code>（有效期 <ttl> 秒）</yellow>
+    <gray>在手机 App 的“绑定游戏账号”中输入此码即可完成绑定。</gray>
+  link-reused: "<yellow>绑定码 <code> 仍然有效（剩余 <ttl> 秒）。</yellow>"
+  link-cooldown: "<red>请等待 <seconds> 秒后再生成新绑定码。</red>"
+  link-bound: "<green>已绑定 App 账号：<app></green> <gray>(如需更换请 /adlink unlink)</gray>"
+  link-not-bound: "<gray>还没有绑定 App 账号，输入 <yellow>/adlink</yellow> 生成绑定码。</gray>"
+  link-unlinked: "<green>已解除与 App 账号的绑定。</green>"
+  link-invalid: "<red>绑定码无效或已使用，请重新输入或重新生成。</red>"
+  link-expired: "<red>绑定码已过期，请在游戏里重新生成。</red>"
+  link-app-bound: "<red>该 App 账号已绑定其他游戏账号。</red>"
+  link-player-bound: "<red>该游戏账号已绑定其他 App 账号，请先 /adlink unlink。</red>"
+  link-success-in-game: "<green>App 账号 <app> 已绑定到本账号，之后的广告奖励会自动到账。</green>"
+  reward-received: "<green>广告奖励到账：<yellow>+<amount> <currency></yellow>（余额 <balance>）</green>"
+  balance: "你的 <currency> 余额：<yellow><balance></yellow>"
+  balance-other: "<player> 的 <currency> 余额：<yellow><balance></yellow>"
+  top-header: "<gold>—— <currency> 排行榜 ——</gold>"
+  top-line: "<gray><n>.</gray> <player> <yellow><balance></yellow>"
+  admin-give: "<green>已给 <player> 发放 <amount> <currency>。</green>"
+  admin-take: "<green>已从 <player> 扣除 <amount> <currency>。</green>"
+  admin-set: "<green>已将 <player> 的 <currency> 设为 <amount>。</green>"
+  admin-unlinked: "<green>已解除 <player> 的绑定。</green>"
+  admin-reloaded: "<green>配置已重载（API 端口/密钥变更已应用）。</green>"
+  invalid-number: "<red>无效的数字：<reason></red>"
+  player-not-found: "<red>找不到玩家：<player></red>"
+  no-permission: "<red>你没有权限执行此命令。</red>"
+  usage-adlink: "<gray>/adlink — 生成绑定码 | /adlink status — 查看 | /adlink unlink — 解除绑定</gray>"
+  usage-adcoin: "<gray>/adcoin <balance|give|take|set|top|unlink|reload></gray>"
+  # ---- 好友社交 ----
+  usage-friend: "<gray>/friend <list|pending|msg|transfer> — 好友列表 | 待处理请求 | 私聊 <player> <msg> | 转币 <player> <amount></gray>"
+  friend-list-header: "<gold>—— 好友列表（共 <n> 人）——</gold>"
+  friend-line: "<gray>·</gray> <player> <status> <gray>余额 <balance></gray>"
+  friend-no-friends: "<gray>你还没有好友。去 App 里添加好友吧。</gray>"
+  friend-pending-header: "<gold>—— 待处理好友请求（<n> 条）——</gold> <gray>请在 App 里接受</gray>"
+  friend-pending-line: "<gray>·</gray> <player>"
+  friend-pending-none: "<green>没有待处理的好友请求。</green>"
+  friend-msg-sent: "<gray>→ <player>: <msg></gray>"
+  friend-msg-incoming: "<gray><player> → 你: <msg></gray>"
+  friend-transfer-ok: "<green>已向 <player> 转出 <amount> <currency>（余额 <balance>）。</green>"
+  friend-transfer-received: "<green>收到好友 <player> 的转币：<yellow>+<amount> <currency></yellow>（余额 <balance>）</green>"
+  friend-not-found: "<red>找不到玩家：<player></red>"
+  friend-not-friend: "<red><player> 还不是你的好友。</red>"
+  friend-not-online: "<red><player> 不在线。</red>"
+  friend-to-self: "<red>不能对自己执行该操作。</red>"
+  friend-request-incoming: "<yellow>收到来自 <player> 的好友请求，请在 App 里接受。</yellow>"
+  friend-added-both: "<green>你和 <player> 已成为好友！</green>"
+  transfer-not-enough: "<red>余额不足（当前 <balance>）。</red>"
+  transfer-min: "<red>单次转币至少 <amount>。</red>"

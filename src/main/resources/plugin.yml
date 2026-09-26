@@ -1,0 +1,37 @@
+name: AdCoin
+version: '1.0.0-SNAPSHOT'
+main: dev.adcoin.AdCoinPlugin
+api-version: '1.21'
+prefix: AdCoin
+authors: [adcoin]
+description: 看广告（手机App）赚取游戏内货币 adcoins，并与服务器经济互通
+website: ''
+
+softdepend:
+  - Vault
+  - PlaceholderAPI
+
+commands:
+  adlink:
+    description: 生成/查看/解除广告币 App 绑定码
+    usage: /adlink [status|unlink]
+    permission: adcoin.link
+  adcoin:
+    description: 广告币管理命令
+    usage: /adcoin <balance|give|take|set|top|unlink|reload>
+    permission: adcoin.admin
+  friend:
+    description: 好友社交（列表/待处理请求/私聊/转币）
+    usage: /friend <list|pending|msg|transfer>
+    permission: adcoin.friend
+
+permissions:
+  adcoin.link:
+    description: 允许使用 /adlink（生成绑定码、查看绑定、解绑）
+    default: true
+  adcoin.admin:
+    description: 广告币管理权限
+    default: op
+  adcoin.friend:
+    description: 允许使用 /friend 好友社交功能
+    default: true
