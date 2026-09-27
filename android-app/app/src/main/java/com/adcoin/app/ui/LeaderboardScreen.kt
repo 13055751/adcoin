@@ -36,11 +36,11 @@ fun LeaderboardScreen(session: Session?) {
     val snackbar = remember { SnackbarHostState() }
     val guest = session == null
     var rows by remember {
-        mutableStateOf(
+        mutableStateOf<List<Pair<Int, Pair<String, Double>>>>(
             if (guest) {
                 DemoData.LEADERBOARD.mapIndexed { i, p -> i + 1 to p }
             } else {
-                emptyList()
+                emptyList<Pair<Int, Pair<String, Double>>>()
             }
         )
     }
@@ -51,7 +51,9 @@ fun LeaderboardScreen(session: Session?) {
         loading = true
         try {
             val res = ApiClient.api.leaderboard(ApiClient.bearer(s.token))
-            rows = (res.top ?: emptyList()).mapIndexed { i, e -> i + 1 to (e.name ?: "?" to e.balance) }
+            rows = (res.top ?: emptyList()).mapIndexed { i, e ->
+                i + 1 to ((e.name ?: "?") to e.balance)
+            }
         } catch (e: Exception) {
             snackbar.showSnackbar("加载失败: ${e.message}")
         } finally {

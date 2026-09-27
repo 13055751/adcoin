@@ -55,13 +55,13 @@ fun FriendScreen(session: Session?, onLoginRequest: () -> Unit) {
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<SearchResult>>(emptyList()) }
     var friends by remember {
-        mutableStateOf(
+        mutableStateOf<List<FriendItem>>(
             if (guest) {
                 DemoData.FRIENDS.map {
                     FriendItem(uuid = "demo-" + it.name, name = it.name, online = it.online, appUserId = "demo-" + it.name)
                 }
             } else {
-                emptyList()
+                emptyList<FriendItem>()
             }
         )
     }
@@ -74,10 +74,10 @@ fun FriendScreen(session: Session?, onLoginRequest: () -> Unit) {
         val token = auth ?: return
         loading = true
         try {
-            val f = ApiClient.api.friend(token, "list", emptyMap())
-            friends = f.friends ?: emptyList()
-            val p = ApiClient.api.friend(token, "pending", emptyMap())
-            pending = p.requests ?: emptyList()
+            val f = ApiClient.api.friend(token, "list", emptyMap<String, Any?>())
+            friends = f.friends ?: emptyList<FriendItem>()
+            val p = ApiClient.api.friend(token, "pending", emptyMap<String, Any?>())
+            pending = p.requests ?: emptyList<SearchResult>()
         } catch (e: Exception) {
             snackbar.showSnackbar("加载失败: ${e.message}")
         } finally {
