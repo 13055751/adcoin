@@ -3,6 +3,7 @@ package com.adcoin.app.data
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import android.content.Context
 import com.adcoin.app.AdCoinApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -16,7 +17,7 @@ data class Session(
     val linkedPlayerName: String?,
 )
 
-private val AdCoinApp.dataStore by preferencesDataStore(name = "session")
+private val Context.dataStore by preferencesDataStore(name = "session")
 
 object SessionStore {
 
