@@ -41,27 +41,32 @@ import com.adcoin.app.data.Session
 import com.adcoin.app.data.SessionStore
 import kotlinx.coroutines.launch
 
-/** 首页：余额 + 看广告赚币 + 绑定游戏账号。 */
+/**
+ * 首页：余额 + 看广告赚币 + 绑定游戏账号。
+ * session 为 null 时为游客模式：显示演示数据，操作引导去登录。
+ */
 @Composable
-fun HomeScreen(session: Session) {
+fun HomeScreen(session: Session?, onLoginRequest: () -> Unit) {
     val context = LocalContext.current
     val activity = context as? Activity
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val provider = remember { AdManager.provider() }
+    val guest = session == null
 
-    var balance by remember { mutableStateOf<Double?>(null) }
-    var linkedName by remember { mutableStateOf(session.linkedPlayerName) }
-    var refreshing by remember { mutableStateOf(true) }
+    var balance by remember { mutableStateOf(if (guest) DemoData.BALANCE else null as Double?) }
+    var linkedName by remember { mutableStateOf(if (guest) DemoData.LINKED_NAME else session?.linkedPlayerName) }
+    var refreshing by remember { mutableStateOf(false) }
     var watching by remember { mutableStateOf(false) }
     var showBindDialog by remember { mutableStateOf(false) }
     var bindCode by remember { mutableStateOf("") }
     var binding by remember { mutableStateOf(false) }
 
     suspend fun refresh() {
+        val s = session ?: return
         refreshing = true
         try {
-            val me = ApiClient.api.me(ApiClient.bearer(session.token))
+            val me = ApiClient.api.me(ApiClient.bearer(s.token))
             balance = me.balance
             if (me.linked) {
                 val name = me.user?.linkedPlayerName
@@ -75,7 +80,7 @@ fun HomeScreen(session: Session) {
         }
     }
 
-    LaunchedEffect(session.token) { refresh() }
+    LaunchedEffect(session?.token) { refresh() }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { inner ->
         Column(
@@ -90,7 +95,10 @@ fun HomeScreen(session: Session) {
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(20.dp)) {
-                    Text("我的 adcoins 余额", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        if (guest) "我的 adcoins 余额（演示）" else "我的 adcoins 余额",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                     Spacer(Modifier.height(4.dp))
                     if (refreshing && balance == null) {
                         CircularProgressIndicator(Modifier.width(28.dp).height(28.dp))
@@ -104,6 +112,7 @@ fun HomeScreen(session: Session) {
                     Spacer(Modifier.height(4.dp))
                     Text(
                         if (linkedName != null) "已绑定游戏账号：$linkedName"
+                        else if (guest) "未登录 · 演示数据"
                         else "未绑定游戏账号",
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -114,21 +123,37 @@ fun HomeScreen(session: Session) {
             // ---- 看广告 ----
             Button(
                 onClick = {
+                    if (guest) {
+                        scope.launch { snackbar.showSnackbar("演示模式：登录后才能看广告赚币") }
+                        onLoginRequest()
+                        return@Button
+                    }
                     val act = activity ?: return@Button
                     if (watching) return@Button
                     watching = true
                     provider.showRewarded(
                         act,
                         onReward = { txId, adUnit ->
+                            val s = session
+                            if (s == null) {
+                                watching = false
+                                return@showRewarded
+                            }
                             scope.launch {
-                                val res = ApiClient.api.claim(
-                                    ApiClient.bearer(session.token),
-                                    mapOf(
-                                        "platform" to provider.id,
-                                        "transactionId" to txId,
-                                        "adUnitId" to adUnit,
-                                    ),
-                                )
+                                val res = try {
+                                    ApiClient.api.claim(
+                                        ApiClient.bearer(s.token),
+                                        mapOf(
+                                            "platform" to provider.id,
+                                            "transactionId" to txId,
+                                            "adUnitId" to adUnit,
+                                        ),
+                                    )
+                                } catch (e: Exception) {
+                                    watching = false
+                                    snackbar.showSnackbar("发放失败: ${e.message}")
+                                    return@launch
+                                }
                                 watching = false
                                 if (res.ok) {
                                     snackbar.showSnackbar(
@@ -161,7 +186,13 @@ fun HomeScreen(session: Session) {
             // ---- 绑定区 ----
             if (linkedName == null) {
                 OutlinedButton(
-                    onClick = { showBindDialog = true },
+                    onClick = {
+                        if (guest) {
+                            onLoginRequest()
+                        } else {
+                            showBindDialog = true
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("🔗 绑定游戏账号")
@@ -175,19 +206,27 @@ fun HomeScreen(session: Session) {
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("已绑定：$linkedName", fontWeight = FontWeight.Medium)
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = {
-                        scope.launch {
-                            val r = ApiClient.api.unbind(ApiClient.bearer(session.token))
-                            if (r.ok) {
-                                linkedName = null
-                                SessionStore.updateLinked(null)
-                                snackbar.showSnackbar("已解绑")
-                            } else {
-                                snackbar.showSnackbar(r.error ?: "解绑失败")
+                    if (!guest) {
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = {
+                            val s = session ?: return@TextButton
+                            scope.launch {
+                                val r = try {
+                                    ApiClient.api.unbind(ApiClient.bearer(s.token))
+                                } catch (e: Exception) {
+                                    snackbar.showSnackbar("解绑失败: ${e.message}")
+                                    return@launch
+                                }
+                                if (r.ok) {
+                                    linkedName = null
+                                    SessionStore.updateLinked(null)
+                                    snackbar.showSnackbar("已解绑")
+                                } else {
+                                    snackbar.showSnackbar(r.error ?: "解绑失败")
+                                }
                             }
-                        }
-                    }) { Text("解绑") }
+                        }) { Text("解绑") }
+                    }
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -219,12 +258,21 @@ fun HomeScreen(session: Session) {
                 TextButton(
                     enabled = bindCode.length >= 4 && !binding,
                     onClick = {
+                        val s = session
+                        if (s == null) {
+                            showBindDialog = false
+                            onLoginRequest()
+                            return@TextButton
+                        }
                         binding = true
                         scope.launch {
-                            val res = ApiClient.api.bind(
-                                ApiClient.bearer(session.token),
-                                mapOf("code" to bindCode),
-                            )
+                            val res = try {
+                                ApiClient.api.bind(ApiClient.bearer(s.token), mapOf("code" to bindCode))
+                            } catch (e: Exception) {
+                                binding = false
+                                snackbar.showSnackbar("绑定失败: ${e.message}")
+                                return@launch
+                            }
                             binding = false
                             if (res.ok) {
                                 val name = res.user?.linkedPlayerName

@@ -4,6 +4,31 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      apiBaseUrl:
+        description: '后端地址（留空用默认 http://10.0.2.2:8787，例：http://1.2.3.4:8787）'
+        required: false
+        default: ''
+      adMode:
+        description: '广告模式：mock | admob | pangle（留空用 mock）'
+        required: false
+        default: ''
+      admobAppId:
+        description: 'AdMob App ID（如 ca-app-pub-xxx~yyy）'
+        required: false
+        default: ''
+      admobRewardedUnit:
+        description: 'AdMob 激励广告位 ID'
+        required: false
+        default: ''
+      pangleAppId:
+        description: 'Pangle App ID'
+        required: false
+        default: ''
+      pangleRewardedSlot:
+        description: 'Pangle 激励视频广告位 ID'
+        required: false
+        default: ''
 
 jobs:
   build-android:
@@ -29,9 +54,26 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # 构建参数：手动触发时用 inputs，留空则用 build.gradle.kts 默认值
       - name: Build debug APK
         working-directory: android-app
-        run: ./gradlew :app:assembleDebug --no-daemon
+        env:
+          IN_API_BASE: ${{ github.event.inputs.apiBaseUrl }}
+          IN_AD_MODE: ${{ github.event.inputs.adMode }}
+          IN_ADMOB_APP: ${{ github.event.inputs.admobAppId }}
+          IN_ADMOB_UNIT: ${{ github.event.inputs.admobRewardedUnit }}
+          IN_PANGLE_APP: ${{ github.event.inputs.pangleAppId }}
+          IN_PANGLE_SLOT: ${{ github.event.inputs.pangleRewardedSlot }}
+        run: |
+          ARGS=""
+          if [ -n "$IN_API_BASE" ]; then ARGS="$ARGS -Padcoin.apiBaseUrl=$IN_API_BASE"; fi
+          if [ -n "$IN_AD_MODE" ]; then ARGS="$ARGS -Padcoin.adMode=$IN_AD_MODE"; fi
+          if [ -n "$IN_ADMOB_APP" ]; then ARGS="$ARGS -Padcoin.admobAppId=$IN_ADMOB_APP"; fi
+          if [ -n "$IN_ADMOB_UNIT" ]; then ARGS="$ARGS -Padcoin.admobRewardedUnit=$IN_ADMOB_UNIT"; fi
+          if [ -n "$IN_PANGLE_APP" ]; then ARGS="$ARGS -Padcoin.pangleAppId=$IN_PANGLE_APP"; fi
+          if [ -n "$IN_PANGLE_SLOT" ]; then ARGS="$ARGS -Padcoin.pangleRewardedSlot=$IN_PANGLE_SLOT"; fi
+          echo "构建参数:$ARGS"
+          ./gradlew :app:assembleDebug --no-daemon $ARGS
 
       - uses: actions/upload-artifact@v4
         with:

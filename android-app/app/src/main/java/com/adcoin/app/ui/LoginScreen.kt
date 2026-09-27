@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,8 +32,9 @@ import com.adcoin.app.data.Session
 import com.adcoin.app.data.SessionStore
 import kotlinx.coroutines.launch
 
+/** 登录/注册页。可返回主界面（游客模式），登录成功后自动回到主界面。 */
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onBack: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -50,7 +52,7 @@ fun LoginScreen() {
     ) {
         Text("💰 AdCoin", style = MaterialTheme.typography.displaySmall)
         Text("看广告赚游戏币", style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
 
         OutlinedTextField(
             value = username,
@@ -81,10 +83,16 @@ fun LoginScreen() {
                 busy = true
                 error = null
                 scope.launch {
-                    val res = if (registerMode) {
-                        ApiClient.api.register(mapOf("username" to username, "password" to password))
-                    } else {
-                        ApiClient.api.login(mapOf("username" to username, "password" to password))
+                    val res = try {
+                        if (registerMode) {
+                            ApiClient.api.register(mapOf("username" to username, "password" to password))
+                        } else {
+                            ApiClient.api.login(mapOf("username" to username, "password" to password))
+                        }
+                    } catch (e: Exception) {
+                        busy = false
+                        error = "连不上后端（${e.message}）。可先返回用演示模式浏览界面。"
+                        return@launch
                     }
                     busy = false
                     if (res.ok && res.token != null) {
@@ -119,5 +127,15 @@ fun LoginScreen() {
         ) {
             Text(if (registerMode) "已有账号？去登录" else "没有账号？去注册")
         }
+        Spacer(Modifier.height(8.dp))
+        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            Text("先不登录，用演示模式浏览")
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "提示：未部署后端时无法登录，但可用演示模式查看所有界面。",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

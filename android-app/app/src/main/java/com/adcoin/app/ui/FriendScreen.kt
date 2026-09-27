@@ -41,28 +41,42 @@ import com.adcoin.app.data.SearchResult
 import com.adcoin.app.data.Session
 import kotlinx.coroutines.launch
 
-/** 好友：搜索添加 / 待处理请求 / 好友列表。 */
+/**
+ * 好友：搜索添加 / 待处理请求 / 好友列表 / 点击转账。
+ * session 为 null 时为游客模式：展示演示好友，操作引导去登录。
+ */
 @Composable
-fun FriendScreen(session: Session) {
+fun FriendScreen(session: Session?, onLoginRequest: () -> Unit) {
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    val auth = ApiClient.bearer(session.token)
+    val guest = session == null
+    val auth = session?.let { ApiClient.bearer(it.token) }
 
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<SearchResult>>(emptyList()) }
-    var friends by remember { mutableStateOf<List<FriendItem>>(emptyList()) }
+    var friends by remember {
+        mutableStateOf(
+            if (guest) {
+                DemoData.FRIENDS.map {
+                    FriendItem(uuid = "demo-" + it.name, name = it.name, online = it.online, appUserId = "demo-" + it.name)
+                }
+            } else {
+                emptyList()
+            }
+        )
+    }
     var pending by remember { mutableStateOf<List<SearchResult>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
+    var loading by remember { mutableStateOf(false) }
     var searching by remember { mutableStateOf(false) }
     var transferTarget by remember { mutableStateOf<FriendItem?>(null) }
-    var transferAmount by remember { mutableStateOf("") }
-    var transferring by remember { mutableStateOf(false) }
 
     suspend fun loadAll() {
+        val token = auth ?: return
+        loading = true
         try {
-            val f = ApiClient.api.friend(auth, "list", emptyMap())
+            val f = ApiClient.api.friend(token, "list", emptyMap())
             friends = f.friends ?: emptyList()
-            val p = ApiClient.api.friend(auth, "pending", emptyMap())
+            val p = ApiClient.api.friend(token, "pending", emptyMap())
             pending = p.requests ?: emptyList()
         } catch (e: Exception) {
             snackbar.showSnackbar("加载失败: ${e.message}")
@@ -71,7 +85,12 @@ fun FriendScreen(session: Session) {
         }
     }
 
-    LaunchedEffect(session.token) { loadAll() }
+    LaunchedEffect(session?.token) { loadAll() }
+
+    val requireLogin: () -> Unit = {
+        scope.launch { snackbar.showSnackbar("演示模式：登录后才能使用好友功能") }
+        onLoginRequest()
+    }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { inner ->
         Column(Modifier.fillMaxSize().padding(inner).padding(16.dp)) {
@@ -88,10 +107,11 @@ fun FriendScreen(session: Session) {
                 Button(
                     enabled = query.isNotBlank() && !searching,
                     onClick = {
+                        val token = auth ?: return@Button requireLogin()
                         searching = true
                         scope.launch {
                             try {
-                                val r = ApiClient.api.search(auth, query.trim())
+                                val r = ApiClient.api.search(token, query.trim())
                                 results = r.results ?: emptyList()
                             } catch (e: Exception) {
                                 snackbar.showSnackbar("搜索失败: ${e.message}")
@@ -108,26 +128,28 @@ fun FriendScreen(session: Session) {
             }
 
             LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                // 搜索结果
                 if (results.isNotEmpty()) {
                     item { SectionTitle("搜索结果") }
                     items(results, key = { it.appUserId ?: it.username ?: it.playerName ?: "r" }) { r ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text(r.username ?: "?", fontWeight = FontWeight.Medium)
+                                Text(r.username ?: r.name ?: "?", fontWeight = FontWeight.Medium)
                                 Text(
-                                    "游戏账号: ${r.playerName ?: "未知"}",
+                                    "游戏账号: ${r.playerName ?: r.name ?: "未知"}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             OutlinedButton(onClick = {
+                                val token = auth ?: return@OutlinedButton requireLogin()
                                 scope.launch {
-                                    val res = ApiClient.api.friend(auth, "request", mapOf("otherAppUserId" to (r.appUserId ?: "")))
-                                    snackbar.showSnackbar(
-                                        if (res.ok) "已发送好友请求"
-                                        else res.error ?: "发送失败"
-                                    )
+                                    val res = try {
+                                        ApiClient.api.friend(token, "request", mapOf("otherAppUserId" to (r.appUserId ?: "")))
+                                    } catch (e: Exception) {
+                                        snackbar.showSnackbar("发送失败: ${e.message}")
+                                        return@launch
+                                    }
+                                    snackbar.showSnackbar(if (res.ok) "已发送好友请求" else (res.error ?: "发送失败"))
                                 }
                             }) { Text("加好友") }
                         }
@@ -135,7 +157,6 @@ fun FriendScreen(session: Session) {
                     item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
                 }
 
-                // 待处理请求
                 if (pending.isNotEmpty()) {
                     item { SectionTitle("待处理请求（${pending.size}）") }
                     items(pending, key = { it.appUserId ?: it.name ?: "p" }) { p ->
@@ -146,15 +167,24 @@ fun FriendScreen(session: Session) {
                                     Text("想加你为好友", style = MaterialTheme.typography.bodySmall)
                                 }
                                 TextButton(onClick = {
+                                    val token = auth ?: return@TextButton requireLogin()
                                     scope.launch {
-                                        val r = ApiClient.api.friend(auth, "accept", mapOf("otherAppUserId" to (p.appUserId ?: "")))
+                                        val r = try {
+                                            ApiClient.api.friend(token, "accept", mapOf("otherAppUserId" to (p.appUserId ?: "")))
+                                        } catch (e: Exception) {
+                                            snackbar.showSnackbar("操作失败: ${e.message}")
+                                            return@launch
+                                        }
                                         if (r.ok) { snackbar.showSnackbar("已接受"); loadAll() }
                                         else snackbar.showSnackbar(r.error ?: "操作失败")
                                     }
                                 }) { Text("接受") }
                                 TextButton(onClick = {
+                                    val token = auth ?: return@TextButton requireLogin()
                                     scope.launch {
-                                        ApiClient.api.friend(auth, "reject", mapOf("otherAppUserId" to (p.appUserId ?: "")))
+                                        try {
+                                            ApiClient.api.friend(token, "reject", mapOf("otherAppUserId" to (p.appUserId ?: "")))
+                                        } catch (_: Exception) { }
                                         loadAll()
                                     }
                                 }) { Text("拒绝") }
@@ -164,8 +194,7 @@ fun FriendScreen(session: Session) {
                     item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
                 }
 
-                // 好友列表
-                item { SectionTitle("我的好友（${friends.size}）") }
+                item { SectionTitle("我的好友（${friends.size}）" + if (guest) " · 演示" else "") }
                 if (friends.isEmpty() && !loading) {
                     item { Text("还没有好友，用上方搜索添加吧。", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
@@ -173,7 +202,9 @@ fun FriendScreen(session: Session) {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .clickable { transferTarget = f }
+                            .clickable {
+                                if (guest) requireLogin() else transferTarget = f
+                            }
                             .padding(vertical = 6.dp),
                     ) {
                         Text(
@@ -183,7 +214,13 @@ fun FriendScreen(session: Session) {
                     }
                 }
                 if (friends.isNotEmpty()) {
-                    item { Text("点击好友可转账", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    item {
+                        Text(
+                            "点击好友可转账" + if (guest) "（演示模式需先登录）" else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
@@ -195,18 +232,25 @@ fun FriendScreen(session: Session) {
             target = target,
             onDismiss = { transferTarget = null },
             onTransfer = { amount, clientTxId ->
+                val token = auth ?: return@TransferDialog requireLogin()
                 scope.launch {
-                    val res = ApiClient.api.transfer(
-                        auth,
-                        mapOf(
-                            "toAppUserId" to (target.appUserId ?: ""),
-                            "amount" to amount.toDoubleOrNull()?.let { it },
-                            "clientTxId" to clientTxId,
-                        ),
-                    )
+                    val res = try {
+                        ApiClient.api.transfer(
+                            token,
+                            mapOf(
+                                "toAppUserId" to (target.appUserId ?: ""),
+                                "amount" to amount.toDoubleOrNull(),
+                                "clientTxId" to clientTxId,
+                            ),
+                        )
+                    } catch (e: Exception) {
+                        snackbar.showSnackbar("转账失败: ${e.message}")
+                        return@launch
+                    }
                     if (res.ok) {
                         snackbar.showSnackbar("已转出 ${formatNumber(amount.toDouble())} adcoins 给 ${target.name}")
                         transferTarget = null
+                        loadAll()
                     } else {
                         snackbar.showSnackbar(res.error ?: "转账失败")
                     }
@@ -226,7 +270,8 @@ private fun SectionTitle(text: String) {
     )
 }
 
-/** 好友转账对话框（App 端） */@Composable
+/** 好友转账对话框（App 端） */
+@Composable
 private fun TransferDialog(
     target: FriendItem,
     onDismiss: () -> Unit,

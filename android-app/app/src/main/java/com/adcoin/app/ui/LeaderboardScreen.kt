@@ -30,18 +30,28 @@ import androidx.compose.ui.unit.dp
 import com.adcoin.app.data.ApiClient
 import com.adcoin.app.data.Session
 
-/** 排行榜：后端 /api/leaderboard → 插件 /api/v1/top。 */
+/** 排行榜：后端 /api/leaderboard → 插件 /api/v1/top。未登录时展示演示数据。 */
 @Composable
-fun LeaderboardScreen(session: Session) {
+fun LeaderboardScreen(session: Session?) {
     val snackbar = remember { SnackbarHostState() }
-    var top by remember { mutableStateOf<List<Pair<Int, Triple<String, String, Double>>>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) }
+    val guest = session == null
+    var rows by remember {
+        mutableStateOf(
+            if (guest) {
+                DemoData.LEADERBOARD.mapIndexed { i, p -> i + 1 to p }
+            } else {
+                emptyList()
+            }
+        )
+    }
+    var loading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(session.token) {
+    LaunchedEffect(session?.token) {
+        val s = session ?: return@LaunchedEffect
+        loading = true
         try {
-            val res = ApiClient.api.leaderboard(ApiClient.bearer(session.token))
-            val list = res.top ?: emptyList()
-            top = list.mapIndexed { index, e -> index + 1 to Triple(e.name ?: "?", e.uuid ?: "", e.balance) }
+            val res = ApiClient.api.leaderboard(ApiClient.bearer(s.token))
+            rows = (res.top ?: emptyList()).mapIndexed { i, e -> i + 1 to (e.name ?: "?" to e.balance) }
         } catch (e: Exception) {
             snackbar.showSnackbar("加载失败: ${e.message}")
         } finally {
@@ -51,16 +61,22 @@ fun LeaderboardScreen(session: Session) {
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { inner ->
         Column(Modifier.fillMaxSize().padding(inner).padding(16.dp)) {
-            Text("adcoins 排行榜", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                "adcoins 排行榜" + if (guest) "（演示）" else "",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(12.dp))
             if (loading) {
                 CircularProgressIndicator()
-            } else if (top.isEmpty()) {
+            } else if (rows.isEmpty()) {
                 Text("暂时没有数据", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 LazyColumn {
-                    itemsIndexed(top) { _, (rank, entry) ->
-                        val (name, _, balance) = entry
+                    itemsIndexed(rows) { _, row ->
+                        val rank = row.first
+                        val name = row.second.first
+                        val balance = row.second.second
                         Card(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(
