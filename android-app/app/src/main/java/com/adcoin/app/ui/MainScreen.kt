@@ -86,7 +86,11 @@ fun MainScreen(session: Session?, onLoginRequest: () -> Unit) {
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (tab) {
-                0 -> HomeScreen(session, onLoginRequest)
+                0 -> HomeScreen(
+                    session = session,
+                    onLoginRequest = onLoginRequest,
+                    onNavigate = { tab = it },
+                )
                 1 -> FriendScreen(session, onLoginRequest)
                 2 -> LeaderboardScreen(session)
                 else -> ProfileScreen(session, onLoginRequest)

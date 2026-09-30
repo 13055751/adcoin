@@ -1,6 +1,10 @@
 package com.adcoin.app.ui
 
 import android.app.Activity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,15 +12,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,6 +44,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,11 +56,12 @@ import com.adcoin.app.data.SessionStore
 import kotlinx.coroutines.launch
 
 /**
- * 首页：余额 + 看广告赚币 + 绑定游戏账号。
- * session 为 null 时为游客模式：显示演示数据，操作引导去登录。
+ * 首页（方案 A · M3）：
+ * 大标题 + primaryContainer 余额卡 + FilledButton 看广告 + tonal 功能入口 + 最近动态。
+ * session 为 null 时为游客模式（演示数据）。
  */
 @Composable
-fun HomeScreen(session: Session?, onLoginRequest: () -> Unit) {
+fun HomeScreen(session: Session?, onLoginRequest: () -> Unit, onNavigate: (Int) -> Unit) {
     val context = LocalContext.current
     val activity = context as? Activity
     val scope = rememberCoroutineScope()
@@ -87,40 +102,58 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(inner)
-                .padding(16.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            // ---- 余额卡 ----
+            // ---- 标题区（方案 A AppBar）----
+            Text("AdCoin", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                when {
+                    linkedName != null -> "已绑定 · $linkedName"
+                    guest -> "游客模式 · 演示数据"
+                    else -> "未绑定游戏账号"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(16.dp))
+
+            // ---- 余额卡（primaryContainer）----
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(Modifier.padding(20.dp)) {
                     Text(
-                        if (guest) "我的 adcoins 余额（演示）" else "我的 adcoins 余额",
-                        style = MaterialTheme.typography.bodyMedium,
+                        "ADCOINS 余额",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Spacer(Modifier.height(4.dp))
                     if (refreshing && balance == null) {
-                        CircularProgressIndicator(Modifier.width(28.dp).height(28.dp))
+                        CircularProgressIndicator(
+                            Modifier.size(28.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
                     } else {
                         Text(
-                            text = formatNumber(balance ?: 0.0),
+                            formatNumber(balance ?: 0.0),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
                     Text(
-                        if (linkedName != null) "已绑定游戏账号：$linkedName"
-                        else if (guest) "未登录 · 演示数据"
-                        else "未绑定游戏账号",
+                        "adcoins",
                         style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
-            // ---- 看广告 ----
+            // ---- 看广告（FilledButton，主 CTA）----
             Button(
                 onClick = {
                     if (guest) {
@@ -173,66 +206,69 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit) {
                     )
                 },
                 enabled = !watching,
-                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
             ) {
                 if (watching) {
-                    CircularProgressIndicator(Modifier.width(18.dp).height(18.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
                 } else {
-                    Text("🎬 看广告 +赚币（${provider.displayName}）")
+                    Icon(Icons.Filled.PlayArrow, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("看广告 · 赚 adcoins")
                 }
             }
             Spacer(Modifier.height(12.dp))
 
-            // ---- 绑定区 ----
-            if (linkedName == null) {
-                OutlinedButton(
-                    onClick = {
-                        if (guest) {
-                            onLoginRequest()
-                        } else {
-                            showBindDialog = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("🔗 绑定游戏账号")
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "提示：先在游戏里输入 /adlink 获取 8 位绑定码，再在此绑定；未绑定无法领取奖励。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // ---- 功能入口（tonal 卡）----
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FeatureTile(
+                    icon = Icons.Filled.Link,
+                    label = "绑定",
+                    onClick = { if (guest) onLoginRequest() else showBindDialog = true },
+                    modifier = Modifier.weight(1f),
                 )
-            } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("已绑定：$linkedName", fontWeight = FontWeight.Medium)
-                    if (!guest) {
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = {
-                            val s = session ?: return@TextButton
-                            scope.launch {
-                                val r = try {
-                                    ApiClient.api.unbind(ApiClient.bearer(s.token))
-                                } catch (e: Exception) {
-                                    snackbar.showSnackbar("解绑失败: ${e.message}")
-                                    return@launch
-                                }
-                                if (r.ok) {
-                                    linkedName = null
-                                    SessionStore.updateLinked(null)
-                                    snackbar.showSnackbar("已解绑")
-                                } else {
-                                    snackbar.showSnackbar(r.error ?: "解绑失败")
-                                }
-                            }
-                        }) { Text("解绑") }
+                FeatureTile(
+                    icon = Icons.Filled.Groups,
+                    label = "好友",
+                    onClick = { if (guest) onLoginRequest() else onNavigate(1) },
+                    modifier = Modifier.weight(1f),
+                )
+                FeatureTile(
+                    icon = Icons.Filled.Leaderboard,
+                    label = "排行",
+                    onClick = { onNavigate(2) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // ---- 最近动态 ----
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(vertical = 6.dp)) {
+                    Text(
+                        "最近动态",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                    if (guest) {
+                        ActivityRow(Icons.Filled.PlayArrow, "广告奖励", "+50", MaterialTheme.colorScheme.primary)
+                        ActivityRow(Icons.Filled.Groups, "转出给 Alex", "-20", MaterialTheme.colorScheme.error)
+                        ActivityRow(Icons.Filled.Link, "绑定 Steve", "✓", MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        Text(
+                            "暂无记录",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        )
                     }
                 }
-            }
-            Spacer(Modifier.height(12.dp))
-
-            if (refreshing && balance != null) {
-                LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         }
     }
@@ -291,6 +327,56 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit) {
             dismissButton = {
                 TextButton(onClick = { showBindDialog = false }) { Text("取消") }
             },
+        )
+    }
+}
+
+/** M3 tonal 功能入口卡。 */
+@Composable
+private fun FeatureTile(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .clickable(onClick = onClick)
+            .padding(vertical = 14.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+    }
+}
+
+/** M3 列表行（图标 tile + 文本 + 金额）。 */
+@Composable
+private fun ActivityRow(icon: ImageVector, text: String, amount: String, amountColor: androidx.compose.ui.graphics.Color) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Text(text, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(
+            amount,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = amountColor,
         )
     }
 }
