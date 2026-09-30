@@ -69,13 +69,19 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit, onNavigate: (Int) 
     val provider = remember { AdManager.provider() }
     val guest = session == null
 
-    var balance by remember { mutableStateOf(if (guest) DemoData.BALANCE else null as Double?) }
-    var linkedName by remember { mutableStateOf(if (guest) DemoData.LINKED_NAME else session?.linkedPlayerName) }
+    // state 只存真实数据；演示值不落 state，guest 时渲染时用常量——
+    // 避免游客↔登录切换时残留旧余额/旧绑定名（remember 无 key 的 bug）
+    var balance by remember(session?.token) { mutableStateOf<Double?>(null) }
+    var linkedName by remember(session?.token) { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var watching by remember { mutableStateOf(false) }
     var showBindDialog by remember { mutableStateOf(false) }
     var bindCode by remember { mutableStateOf("") }
     var binding by remember { mutableStateOf(false) }
+
+    // 渲染用的显示值：游客=演示常量，登录=真实 state
+    val displayBalance = if (guest) DemoData.BALANCE else balance
+    val displayLinked = if (guest) DemoData.LINKED_NAME else linkedName
 
     suspend fun refresh() {
         val s = session ?: return
@@ -109,7 +115,7 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit, onNavigate: (Int) 
             Text("AdCoin", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.SemiBold)
             Text(
                 when {
-                    linkedName != null -> "已绑定 · $linkedName"
+                    displayLinked != null -> "已绑定 · $displayLinked"
                     guest -> "游客模式 · 演示数据"
                     else -> "未绑定游戏账号"
                 },
@@ -131,14 +137,14 @@ fun HomeScreen(session: Session?, onLoginRequest: () -> Unit, onNavigate: (Int) 
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Spacer(Modifier.height(4.dp))
-                    if (refreshing && balance == null) {
+                    if (refreshing && balance == null && !guest) {
                         CircularProgressIndicator(
                             Modifier.size(28.dp),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     } else {
                         Text(
-                            formatNumber(balance ?: 0.0),
+                            formatNumber(displayBalance ?: 0.0),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
