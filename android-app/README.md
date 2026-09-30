@@ -7,6 +7,12 @@
 真机联调: adb reverse tcp:8787 tcp:8787 或 -Padcoin.apiBaseUrl=http://<你的IP>:8787
 ```
 
+## 游客模式（免登录）
+
+**打开 App 直接进主界面**，未登录时使用内置演示数据，首页/好友/排行/我的都能浏览——
+即使没有部署后端也能看界面。登录是**可选入口**（顶部横幅或"我的"页按钮），不是门槛。
+登录页也提供"先不登录，用演示模式浏览"。登录后自动切换到真实数据。
+
 ## 构建
 
 用 **Android Studio**（Koala+，AGP 8.5.2 / JDK 17）打开 `android-app/` 目录即可；或命令行：
@@ -16,7 +22,22 @@ cd android-app
 ./gradlew :app:assembleDebug        # 需要 Android SDK；产物 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-> 本仓库不包含 `gradlew` 脚本与 wrapper jar，Android Studio 打开时会自动补全；也可自行 `gradle wrapper`。
+> 仓库已包含 gradle wrapper（`gradlew` + `gradle/wrapper/`），可直接构建。
+
+### 云端构建（无需本地 Android SDK）
+
+推送到 `main` 会自动构建；也可以在 GitHub 仓库页手动触发带参数构建：
+
+**Actions → Build → Run workflow**，可填：
+
+| 输入 | 说明 |
+|---|---|
+| `apiBaseUrl` | 后端地址，如 `http://1.2.3.4:8787`（留空用默认 `http://10.0.2.2:8787`） |
+| `adMode` | `mock` / `admob` / `pangle` |
+| `admobAppId` / `admobRewardedUnit` | 真实 AdMob 参数 |
+| `pangleAppId` / `pangleRewardedSlot` | 真实 Pangle 参数 |
+
+构建完成后在 run 的 **Artifacts** 里下载 `adcoin-apk`。
 
 ## 广告模式（-P 参数）
 
@@ -27,6 +48,18 @@ cd android-app
 | `adcoin.admobAppId` | 官方测试 ID | 真实 AdMob App ID |
 | `adcoin.admobRewardedUnit` | 官方测试广告位 | 真实激励视频广告位 |
 | `adcoin.pangleAppId` / `adcoin.pangleRewardedSlot` | 空 | 真实穿山甲 App ID / 广告位 |
+
+示例（构建一个连自己服务器、带 AdMob 参数的 APK）：
+
+```bash
+./gradlew :app:assembleDebug \
+  -Padcoin.apiBaseUrl=http://1.2.3.4:8787 \
+  -Padcoin.adMode=admob \
+  -Padcoin.admobAppId=ca-app-pub-xxx~yyy \
+  -Padcoin.admobRewardedUnit=ca-app-pub-xxx/zzz
+```
+
+当前 APK 内编译进去的参数可在 App 的"我的"页查看。
 
 用法：`./gradlew :app:assembleDebug -Padcoin.adMode=admob -Padcoin.admobAppId=ca-app-pub-xxxx`（或写入 `~/.gradle/gradle.properties`）。
 
