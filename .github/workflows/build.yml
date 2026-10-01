@@ -14,25 +14,17 @@ on:
         required: false
         default: ''
       admobAppId:
-        description: 'AdMob App ID（如 ca-app-pub-xxx~yyy）'
+        description: 'AdMob App ID（如 ca-app-pub-xxx~yyy，写入 manifest）'
         required: false
         default: ''
       admobRewardedUnit:
         description: 'AdMob 激励广告位 ID'
         required: false
         default: ''
-      pangleAppId:
-        description: 'Pangle App ID'
-        required: false
-        default: ''
-      pangleRewardedSlot:
-        description: 'Pangle 激励视频广告位 ID'
-        required: false
-        default: ''
 
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build Android APK (Flutter)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,43 +34,43 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ubuntu runner 预装完整 Android SDK；此处仅兜底补充 platform/build-tools。
-      # 不使用 android-actions/setup-android（其安装废弃的 tools 包会在新版 runner 失败）。
-      - name: Prepare Android SDK (best effort)
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # 用 flutter create 生成 android/ 脚手架（含 gradle wrapper），再覆盖我们的代码
+      - name: Generate platform scaffolding
+        run: flutter create --org com.adcoin --project-name adcoin --platforms android /tmp/gen
+
+      - name: Overlay app code + patch android
+        env:
+          ADMOB_APP_ID: ${{ github.event.inputs.admobAppId }}
         run: |
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"; fi
-          echo "sdkmanager=$SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" || echo "components already present or install skipped"
+          rm -rf /tmp/gen/lib
+          cp -r flutter-app/lib /tmp/gen/lib
+          cp flutter-app/pubspec.yaml /tmp/gen/pubspec.yaml
+          bash flutter-app/ci/patch_android.sh /tmp/gen
 
-      - uses: gradle/actions/setup-gradle@v4
-
-      # 构建参数：手动触发时用 inputs，留空则用 build.gradle.kts 默认值
       - name: Build debug APK
-        working-directory: android-app
+        working-directory: /tmp/gen
         env:
           IN_API_BASE: ${{ github.event.inputs.apiBaseUrl }}
           IN_AD_MODE: ${{ github.event.inputs.adMode }}
-          IN_ADMOB_APP: ${{ github.event.inputs.admobAppId }}
           IN_ADMOB_UNIT: ${{ github.event.inputs.admobRewardedUnit }}
-          IN_PANGLE_APP: ${{ github.event.inputs.pangleAppId }}
-          IN_PANGLE_SLOT: ${{ github.event.inputs.pangleRewardedSlot }}
         run: |
-          ARGS=""
-          if [ -n "$IN_API_BASE" ]; then ARGS="$ARGS -Padcoin.apiBaseUrl=$IN_API_BASE"; fi
-          if [ -n "$IN_AD_MODE" ]; then ARGS="$ARGS -Padcoin.adMode=$IN_AD_MODE"; fi
-          if [ -n "$IN_ADMOB_APP" ]; then ARGS="$ARGS -Padcoin.admobAppId=$IN_ADMOB_APP"; fi
-          if [ -n "$IN_ADMOB_UNIT" ]; then ARGS="$ARGS -Padcoin.admobRewardedUnit=$IN_ADMOB_UNIT"; fi
-          if [ -n "$IN_PANGLE_APP" ]; then ARGS="$ARGS -Padcoin.pangleAppId=$IN_PANGLE_APP"; fi
-          if [ -n "$IN_PANGLE_SLOT" ]; then ARGS="$ARGS -Padcoin.pangleRewardedSlot=$IN_PANGLE_SLOT"; fi
-          echo "构建参数:$ARGS"
-          ./gradlew :app:assembleDebug --no-daemon $ARGS
+          flutter pub get
+          DEFINES=""
+          if [ -n "$IN_API_BASE" ]; then DEFINES="$DEFINES --dart-define=API_BASE_URL=$IN_API_BASE"; fi
+          if [ -n "$IN_AD_MODE" ]; then DEFINES="$DEFINES --dart-define=AD_MODE=$IN_AD_MODE"; fi
+          if [ -n "$IN_ADMOB_UNIT" ]; then DEFINES="$DEFINES --dart-define=ADMOB_REWARDED_UNIT=$IN_ADMOB_UNIT"; fi
+          echo "dart-defines: $DEFINES"
+          flutter build apk --debug $DEFINES
 
       - uses: actions/upload-artifact@v4
         with:
           name: adcoin-apk
-          path: android-app/app/build/outputs/apk/debug/*.apk
+          path: /tmp/gen/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   build-plugin:
