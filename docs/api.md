@@ -27,6 +27,9 @@ sig       = hex( HMAC-SHA256( apiKey, canonical ) )   // 小写 hex
 | `/api/v1/reward` | `reward\n{txId}\n{appUserId}\n{ts}\n{amount}\n{adNetwork}\n{adUnitId}` |
 | `/api/v1/friend` | `friend\n{action}\n{appUserId}\n{otherAppUserId}\n{ts}`（list 时 otherAppUserId 为空串） |
 | `/api/v1/transfer` | `transfer\n{txId}\n{fromAppUserId}\n{toAppUserId}\n{ts}\n{amount}` |
+| `/api/v1/balance` | `balance\n{appUserId}\n{ts}` |
+| `/api/v1/top` | `top\n{ts}` |
+| `/api/v1/ledger` | `ledger\n{appUserId}\n{ts}` |
 
 > `adNetwork`/`adUnitId` 缺省时在 canonical 中为空串（仍保留换行）。
 > 完整可运行示例见 `examples/backend-node.mjs`。
@@ -85,9 +88,36 @@ App 端好友关系管理（双向确认）。
 | `accept` | 接受对方请求（需存在 pending） | `200 { ok: true }`（双方在线通知"成为好友"） |
 | `reject` | 拒绝/忽略请求（幂等） | `200 { ok: true }` |
 | `remove` | 解除好友 | `200 { ok, removed: bool }` |
-| `list` | 好友列表（含在线状态） | `200 { ok, friends: [{ uuid, name, online }] }` |
+| `list` | 好友列表（含在线状态、appUserId） | `200 { ok, friends: [{ uuid, name, online, appUserId? }] }` |
+| `pending` | 我的待处理好友请求 | `200 { ok, requests: [{ uuid, name, appUserId? }] }` |
 
 错误：`404 not_linked|no_request`、`400 self|bad_action`。
+
+## POST /api/v1/balance
+
+查询绑定与余额（App「我的/首页」刷新用）。
+
+请求：`{ "appUserId", "ts", "sig" }`
+
+响应：
+- 已绑定：`200 { ok, linked: true, playerName, playerUuid, balance, dailyUsed, dailyLimit }`
+  （`dailyUsed` = 今日已看次数；`dailyLimit` = 插件 `limits.daily-per-player`）
+- 未绑定：`200 { ok, linked: false }`
+
+## POST /api/v1/top
+
+余额排行榜。请求：`{ "ts", "sig" }` → `200 { ok, top: [{ uuid, name, balance }] }`（降序前10）
+
+## POST /api/v1/ledger
+
+最近账本记录（App「最近动态」时间线）。
+
+请求：`{ "appUserId", "ts", "sig" }`
+
+响应：
+- `200 { ok, linked: true, entries: [{ txId, amount, adNetwork, adUnitId, ts, fromAppUserId? }] }`（时间正序，最多 20 条）
+  - `adNetwork` 为 `transfer` = 收到好友转币（`fromAppUserId` 为转出方）；其余 = 广告奖励（`adNetwork` 为广告平台）
+- 未绑定：`200 { ok, linked: false, entries: [] }`
 
 ## POST /api/v1/transfer
 

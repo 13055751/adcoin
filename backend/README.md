@@ -41,13 +41,15 @@ npm run smoke               # 全链路冒烟测试（自动起两个服务并�
 |---|---|
 | `POST /api/auth/register` `{username,password}` | 注册 → `{token, user}` |
 | `POST /api/auth/login` | 登录 → `{token, user}` |
-| `GET /api/me` | 用户信息 + 余额 + 绑定状态（需要 Bearer token） |
+| `GET /api/me` | 用户信息 + 余额 + 绑定状态（`balance/dailyUsed/dailyLimit/adReward`，需 Bearer token） |
 | `POST /api/ad/claim` `{platform,transactionId,adUnitId}` | 看广告完成上报 → 验真 → 插件发币（幂等） |
 | `POST /api/link/bind` `{code}` | 输入游戏内绑定码完成绑定 |
 | `POST /api/link/unbind` | 解绑 |
 | `GET /api/friend/search?q=` | 按用户名搜玩家（需已绑定） |
-| `POST /api/friend/:action` | `request\|accept\|reject\|remove\|list` |
+| `POST /api/friend/:action` | `request\|accept\|reject\|remove\|list\|pending` |
 | `POST /api/transfer` `{toAppUserId,amount,clientTxId}` | 好友转币（幂等） |
+| `GET /api/leaderboard` | adcoins 持有榜（插件 /api/v1/top 透传） |
+| `GET /api/transactions` | 我的最近账本动态（插件 /api/v1/ledger 透传） |
 | `GET /health` | 存活检查 |
 
 ## 广告验证模式
