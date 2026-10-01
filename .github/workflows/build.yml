@@ -70,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: adcoin-apk
-          path: /tmp/gen/build/outputs/apk/debug/*.apk
+          path: /tmp/gen/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
   build-plugin:
