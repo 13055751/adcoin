@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.adcoin.app.ad.AdManager
 import com.adcoin.app.data.ApiClient
 import com.adcoin.app.data.Session
@@ -227,7 +228,7 @@ fun HomeScreen(
             Text(
                 "ADCOINS 余额",
                 style = MaterialTheme.typography.labelMedium,
-                letterSpacing = androidx.compose.ui.unit.TextUnit(1.2f, androidx.compose.ui.unit.TextUnitType.Sp),
+                letterSpacing = 1.2.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
