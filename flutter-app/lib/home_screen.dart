@@ -203,6 +203,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.password, size: 18),
+                label: const Text('离线服账密绑定（AuthMe）'),
+                onPressed: () {
+                  Navigator.of(c).pop(); // 关当前弹窗
+                  _openPasswordBindDialog();
+                },
+              ),
+            ),
           ],
         ),
         actions: [
@@ -228,6 +239,71 @@ class _HomeScreenState extends State<HomeScreen> {
         _refresh();
       } else {
         _snack('绑定失败: ${res.error ?? "未知错误"}');
+      }
+    } catch (e) {
+      _snack('绑定失败: $e');
+    }
+  }
+
+  /// 离线服（AuthMe）账号密码绑定：不进游戏拿码，直接用 MC 账密校验绑定。
+  Future<void> _openPasswordBindDialog() async {
+    final userCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('离线服账密绑定'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('输入你在游戏里注册的账号密码（AuthMe 校验，密码仅经链路不落库）：'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: userCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'MC 用户名', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                  labelText: 'MC 密码', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('取消')),
+          FilledButton(
+            onPressed: () {
+              if (userCtrl.text.trim().isNotEmpty && passCtrl.text.isNotEmpty) {
+                Navigator.of(c).pop(true);
+              }
+            },
+            child: const Text('绑定'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final res = await _api.bindPassword(userCtrl.text.trim(), passCtrl.text);
+      if (res.ok) {
+        final name = res.user?.linkedPlayerName;
+        setState(() => _linkedName = name);
+        SessionStore.updateLinked(name);
+        _snack('绑定成功：${name ?? "已绑定"}');
+        _refresh();
+      } else {
+        final msg = switch (res.error) {
+          'authme_missing' => '该服务器未安装 AuthMe，不支持账密绑定',
+          'bad_password' => '密码错误',
+          'account_not_registered' => '游戏里还没有该账号（先 /register）',
+          'password_lock' => '尝试过于频繁，请 15 分钟后再试',
+          _ => '绑定失败: ${res.error ?? "未知错误"}',
+        };
+        _snack(msg);
       }
     } catch (e) {
       _snack('绑定失败: $e');

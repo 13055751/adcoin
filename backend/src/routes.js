@@ -115,6 +115,31 @@ router.post('/api/link/bind', requireAuth, async (req, res) => {
   }
 });
 
+// 离线服（AuthMe）MC 账号密码绑定
+router.post('/api/link/bind-password', requireAuth, async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) throw err(400, 'bad_request', '缺少 username/password');
+    if (req.user.linkedPlayerUuid) {
+      throw err(409, 'already_linked', '已绑定 ' + req.user.linkedPlayerName);
+    }
+    const pluginRes = await pluginApi.bindPassword(username, password, req.user.appUserId);
+    if (!pluginRes.json.ok) {
+      res.status(pluginRes.status || 502).json(pluginRes.json);
+      return;
+    }
+    const user = db.updateUser(req.user.id, {
+      linkedPlayerUuid: pluginRes.json.playerUuid,
+      linkedPlayerName: pluginRes.json.playerName,
+      linkedAt: Date.now(),
+      longToken: pluginRes.json.longToken || null,
+    });
+    res.json({ ok: true, user: publicUser(user), longToken: user.longToken });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
+  }
+});
+
 // 长期令牌直接（重）绑定：换设备/重装后恢复
 router.post('/api/link/bind-long', requireAuth, async (req, res) => {
   try {

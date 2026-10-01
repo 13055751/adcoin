@@ -67,6 +67,12 @@ public final class Signer {
         return "link-long\n" + appUserId + "\n" + longToken + "\n" + ts;
     }
 
+    /** /api/v1/bind-by-password 的 canonical 串（离线服 AuthMe 密码绑定）。 */
+    public static String bindPasswordCanonical(String mcUsername, String mcPassword,
+                                               String appUserId, long ts) {
+        return "bind-password\n" + mcUsername + "\n" + mcPassword + "\n" + appUserId + "\n" + ts;
+    }
+
     /** /api/v1/unlink 的 canonical 串（必须出示长期令牌，旧数据 token 为空串）。 */
     public static String unlinkCanonical(String appUserId, String longToken, long ts) {
         return "unlink\n" + appUserId + "\n" + nvl(longToken) + "\n" + ts;

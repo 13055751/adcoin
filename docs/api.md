@@ -24,6 +24,7 @@ sig       = hex( HMAC-SHA256( apiKey, canonical ) )   // 小写 hex
 |---|---|
 | `/api/v1/link` | `link\n{code大写}\n{appUserId}\n{ts}` |
 | `/api/v1/link-long` | `link-long\n{appUserId}\n{longToken}\n{ts}` |
+| `/api/v1/bind-by-password` | `bind-password\n{mcUsername}\n{mcPassword}\n{appUserId}\n{ts}` |
 | `/api/v1/unlink` | `unlink\n{appUserId}\n{longToken}\n{ts}`（旧数据 token 为空串） |
 | `/api/v1/reward` | `reward\n{txId}\n{appUserId}\n{ts}\n{amount}\n{adNetwork}\n{adUnitId}` |
 | `/api/v1/friend` | `friend\n{action}\n{appUserId}\n{otherAppUserId}\n{ts}`（list 时 otherAppUserId 为空串） |
@@ -65,6 +66,21 @@ App 端提交游戏内生成的**短码**（聊天字符码，或地图二维码
 - `200`：`{ "ok": true, "playerName", "playerUuid", "longToken" }`（**令牌轮换**，旧令牌作废）
 - `401 token_invalid` —— 令牌不存在/已作废
 - `409 app_already_bound` —— 该 app 已绑别的玩家
+
+## POST /api/v1/bind-by-password
+
+**离线服（装有 AuthMe）**：不进游戏拿码，直接用 MC 账号密码绑定（后端 → 插件，插件反射调
+`fr.xephi.authme.api.v3.AuthMeApi#isRegistered/#checkPassword` 校验）。
+
+请求：`{ "mcUsername", "mcPassword", "appUserId", "ts", "sig" }`
+响应：
+- `200`：`{ "ok": true, "playerName", "playerUuid", "longToken" }`（与短码绑定同规则签发令牌）
+- `400 authme_missing|authme_api_missing` —— 服务器未装 AuthMe（App 该入口应隐藏/提示）
+- `404 account_not_registered` / `401 bad_password`
+- `429 password_lock` —— 同 appUserId 连续 10 次密码错误锁 15 分钟（防撞库）
+- `409 app_already_bound|player_already_bound`
+
+> 密码**不落库**，仅在 App→后端→插件链路传输；部署时后端必须 HTTPS/内网回环。
 
 ## POST /api/v1/unlink
 

@@ -15,6 +15,8 @@ export const canonical = {
     `reward\n${txId}\n${appUserId}\n${ts}\n${formatAmount(amount)}\n${adNetwork ?? ''}\n${adUnitId ?? ''}`,
   link: (code, appUserId, ts) => `link\n${String(code).toUpperCase()}\n${appUserId}\n${ts}`,
   linkLong: (appUserId, longToken, ts) => `link-long\n${appUserId}\n${longToken}\n${ts}`,
+  bindPassword: (mcUsername, mcPassword, appUserId, ts) =>
+    `bind-password\n${mcUsername}\n${mcPassword}\n${appUserId}\n${ts}`,
   unlink: (appUserId, longToken, ts) => `unlink\n${appUserId}\n${longToken ?? ''}\n${ts}`,
   friend: (action, appUserId, other, ts) =>
     `friend\n${action}\n${appUserId}\n${other ?? ''}\n${ts}`,

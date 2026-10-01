@@ -76,6 +76,26 @@ app.post('/api/v1/link-long', (req, res) => {
   res.json({ ok: true, playerName: owner.name, playerUuid: owner.uuid, longToken: fresh });
 });
 
+// 离线服账密绑定（mock：不真验密码，校验规则与真实插件一致）
+app.post('/api/v1/bind-by-password', (req, res) => {
+  const { mcUsername, appUserId } = req.body || {};
+  if (!mcUsername || !appUserId) return res.status(400).json({ ok: false, error: 'bad_request' });
+  const cur = bindings.get(appUserId);
+  if (cur) return res.status(409).json({ ok: false, error: 'app_already_bound' });
+  const uuid = 'uuid-' + (uid++);
+  const b = { uuid, name: mcUsername };
+  for (const [app, bound] of bindings.entries()) {
+    if (bound.uuid === uuid && app !== appUserId) {
+      return res.status(409).json({ ok: false, error: 'player_already_bound' });
+    }
+  }
+  bindings.set(appUserId, b);
+  const longToken = crypto.randomBytes(48).toString('hex');
+  tokenOwners.set(longToken, b);
+  appTokens.set(appUserId, longToken);
+  res.json({ ok: true, playerName: b.name, playerUuid: b.uuid, longToken });
+});
+
 app.post('/api/v1/unlink', (req, res) => {
   const { appUserId, longToken } = req.body || {};
   const stored = appTokens.get(appUserId);

@@ -97,6 +97,17 @@ const main = async () => {
     check('长期令牌重绑成功', rebind.ok && rebind.user.linkedPlayerName, JSON.stringify(rebind));
     check('重绑轮换令牌', typeof rebind.longToken === 'string' && rebind.longToken !== bindA.longToken);
 
+    // 离线服账密绑定（mock AuthMe：任意账密通过）
+    const regC = await api('POST', '/api/auth/register', { username: 'charlie', password: 'secret1' });
+    check('注册 charlie', regC.ok && regC.token);
+    const pwBind = await api('POST', '/api/link/bind-password',
+      { username: 'mccharlie', password: 'pw123' }, regC.token);
+    check('账密绑定成功', pwBind.ok && pwBind.user.linkedPlayerName === 'mccharlie', JSON.stringify(pwBind));
+    check('账密绑定签发长期令牌', typeof pwBind.longToken === 'string' && pwBind.longToken.length === 96);
+    const pwDup = await api('POST', '/api/link/bind-password',
+      { username: 'mccharlie', password: 'pw123' }, tokenA);
+    check('已绑定账号账密绑定被拒', pwDup.error === 'already_linked', JSON.stringify(pwDup));
+
     // 看广告（mock）→ 发币
     const claim1 = await api('POST', '/api/ad/claim', { platform: 'mock', transactionId: 't-001', adUnitId: 'mock-unit' }, tokenA);
     check('看广告发币 50', claim1.ok && claim1.credited && claim1.balance === 50, JSON.stringify(claim1));

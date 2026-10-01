@@ -17,6 +17,11 @@ export const pluginApi = {
       (ts) => canonical.linkLong(appUserId, longToken, ts));
   },
 
+  bindPassword(mcUsername, mcPassword, appUserId) {
+    return callPlugin('/api/v1/bind-by-password', { mcUsername, mcPassword, appUserId },
+      (ts) => canonical.bindPassword(mcUsername, mcPassword, appUserId, ts));
+  },
+
   unlink(appUserId, longToken) {
     return callPlugin('/api/v1/unlink', { appUserId, longToken: longToken ?? '' },
       (ts) => canonical.unlink(appUserId, longToken, ts));

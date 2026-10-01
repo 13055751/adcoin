@@ -43,6 +43,7 @@ public final class ApiServer {
         server.createContext("/api/v1/reward", new RewardHandler(context));
         server.createContext("/api/v1/link", new LinkHandler(context));
         server.createContext("/api/v1/link-long", new LinkLongHandler(context));
+        server.createContext("/api/v1/bind-by-password", new PasswordBindHandler(context));
         server.createContext("/api/v1/unlink", new UnlinkHandler(context));
         server.createContext("/api/v1/friend", new FriendHandler(context));
         server.createContext("/api/v1/transfer", new TransferHandler(context));
