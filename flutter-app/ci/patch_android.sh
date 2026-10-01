@@ -19,6 +19,13 @@ fi
 if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
   sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' "$MANIFEST"
 fi
+
+# --- compileSdk 37：permission_handler_android 要求 ≥37（模板为 36，AGP 仅警告） ---
+APP_GRADLE="$GEN/android/app/build.gradle.kts"
+if [ -f "$APP_GRADLE" ] && grep -qE "compileSdk\s*=\s*[0-9]+" "$APP_GRADLE"; then
+  sed -i -E 's/compileSdk\s*=\s*[0-9]+/compileSdk = 37/' "$APP_GRADLE"
+  echo "[patch] compileSdk -> 37"
+fi
 if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
   sed -i "s#</application>#    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\" />\n    </application>#" "$MANIFEST"
 fi
