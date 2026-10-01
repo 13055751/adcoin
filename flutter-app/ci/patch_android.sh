@@ -21,10 +21,17 @@ if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
 fi
 
 # --- compileSdk 37：permission_handler_android 要求 ≥37（模板为 36，AGP 仅警告） ---
+# 模板两种写法都要覆盖：compileSdk = 36（数字）/ compileSdk = flutter.compileSdkVersion
 APP_GRADLE="$GEN/android/app/build.gradle.kts"
-if [ -f "$APP_GRADLE" ] && grep -qE "compileSdk\s*=\s*[0-9]+" "$APP_GRADLE"; then
+if [ -f "$APP_GRADLE" ]; then
+  sed -i -E 's/compileSdk\s*=\s*flutter\.compileSdkVersion/compileSdk = 37/' "$APP_GRADLE"
   sed -i -E 's/compileSdk\s*=\s*[0-9]+/compileSdk = 37/' "$APP_GRADLE"
-  echo "[patch] compileSdk -> 37"
+  if grep -qE "compileSdk\s*=\s*37" "$APP_GRADLE"; then
+    echo "[patch] compileSdk -> 37"
+  else
+    echo "[patch] WARNING: compileSdk 未被改写，检查模板写法！"
+    grep -n "compileSdk" "$APP_GRADLE" || true
+  fi
 fi
 if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
   sed -i "s#</application>#    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\" />\n    </application>#" "$MANIFEST"
