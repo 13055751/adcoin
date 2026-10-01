@@ -87,6 +87,21 @@ public final class DataStore {
         }
     }
 
+    /** 按长期令牌查绑定（解绑校验 / link-long 用）。 */
+    public Optional<Binding> bindingByLongToken(String longToken) {
+        if (longToken == null || longToken.isEmpty()) {
+            return Optional.empty();
+        }
+        synchronized (lock) {
+            for (Binding b : bindings.values()) {
+                if (longToken.equals(b.longToken())) {
+                    return Optional.of(b);
+                }
+            }
+            return Optional.empty();
+        }
+    }
+
     public Optional<PendingLink> pendingLink(String code) {
         synchronized (lock) {
             return Optional.ofNullable(pendingLinks.get(code));

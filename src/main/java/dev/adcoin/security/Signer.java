@@ -62,9 +62,14 @@ public final class Signer {
         return "link\n" + code.trim().toUpperCase(Locale.ROOT) + "\n" + appUserId + "\n" + ts;
     }
 
-    /** /api/v1/unlink 的 canonical 串。 */
-    public static String unlinkCanonical(String appUserId, long ts) {
-        return "unlink\n" + appUserId + "\n" + ts;
+    /** /api/v1/link-long 的 canonical 串（长期令牌直接重绑）。 */
+    public static String linkLongCanonical(String appUserId, String longToken, long ts) {
+        return "link-long\n" + appUserId + "\n" + longToken + "\n" + ts;
+    }
+
+    /** /api/v1/unlink 的 canonical 串（必须出示长期令牌，旧数据 token 为空串）。 */
+    public static String unlinkCanonical(String appUserId, String longToken, long ts) {
+        return "unlink\n" + appUserId + "\n" + nvl(longToken) + "\n" + ts;
     }
 
     /** /api/v1/transfer 的 canonical 串。 */

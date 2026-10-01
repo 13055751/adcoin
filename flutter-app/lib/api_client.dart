@@ -92,6 +92,9 @@ class ApiClient {
   Future<BindResult> bind(String code) async =>
       BindResult.fromJson(await _req('POST', 'api/link/bind', body: {'code': code}));
 
+  Future<BindResult> bindLong() async =>
+      BindResult.fromJson(await _req('POST', 'api/link/bind-long', body: {}));
+
   Future<GenericResult> unbind() async =>
       GenericResult.fromJson(await _req('POST', 'api/link/unbind'));
 

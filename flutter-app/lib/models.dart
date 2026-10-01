@@ -63,6 +63,7 @@ class MeInfo {
   final int dailyLimit;
   final double adReward;
   final bool linked;
+  final bool hasToken; // 服务端持有长期令牌（可恢复绑定）
   final String? error;
 
   const MeInfo({
@@ -73,6 +74,7 @@ class MeInfo {
     this.dailyLimit = 20,
     this.adReward = 50,
     this.linked = false,
+    this.hasToken = false,
     this.error,
   });
 
@@ -84,6 +86,7 @@ class MeInfo {
         dailyLimit: (j['dailyLimit'] as num?)?.toInt() ?? 20,
         adReward: (j['adReward'] as num?)?.toDouble() ?? 50,
         linked: j['linked'] == true,
+        hasToken: j['hasToken'] == true,
         error: j['error'] as String?,
       );
 }

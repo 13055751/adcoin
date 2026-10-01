@@ -23,7 +23,8 @@ sig       = hex( HMAC-SHA256( apiKey, canonical ) )   // 小写 hex
 | 端点 | canonical |
 |---|---|
 | `/api/v1/link` | `link\n{code大写}\n{appUserId}\n{ts}` |
-| `/api/v1/unlink` | `unlink\n{appUserId}\n{ts}` |
+| `/api/v1/link-long` | `link-long\n{appUserId}\n{longToken}\n{ts}` |
+| `/api/v1/unlink` | `unlink\n{appUserId}\n{longToken}\n{ts}`（旧数据 token 为空串） |
 | `/api/v1/reward` | `reward\n{txId}\n{appUserId}\n{ts}\n{amount}\n{adNetwork}\n{adUnitId}` |
 | `/api/v1/friend` | `friend\n{action}\n{appUserId}\n{otherAppUserId}\n{ts}`（list 时 otherAppUserId 为空串） |
 | `/api/v1/transfer` | `transfer\n{txId}\n{fromAppUserId}\n{toAppUserId}\n{ts}\n{amount}` |
@@ -38,7 +39,8 @@ sig       = hex( HMAC-SHA256( apiKey, canonical ) )   // 小写 hex
 
 ## POST /api/v1/link
 
-App 端提交游戏内生成的绑定码，绑定 App 账号与游戏账号。
+App 端提交游戏内生成的**短码**（聊天字符码，或地图二维码内容 `ADCOIN:CODE` 去前缀后），
+完成绑定并**签发长期令牌**（短码只是一次性引导，安全载体是 longToken）。
 
 请求：
 ```json
@@ -46,13 +48,30 @@ App 端提交游戏内生成的绑定码，绑定 App 账号与游戏账号。
 ```
 
 响应：
-- `200`：`{ "ok": true, "playerName": "Steve", "playerUuid": "..." }`（游戏内在线会收到通知）
+- `200`：`{ "ok": true, "playerName": "Steve", "playerUuid": "...", "longToken": "<96位hex>" }`
+  （游戏内在线会收到通知；**请把 longToken 持久化**，解绑/换设备恢复都要用）
 - `404 code_invalid` / `410 code_expired` / `409 app_already_bound|player_already_bound`
+- `429 code_lock` —— 同一 appUserId 连续 10 次无效码，锁 15 分钟（防撞库）
 - `401 bad_signature|expired` / `403 forbidden` / `400 bad_json|missing_field:*`
+
+游戏内 `/adlink` 同时发一张**二维码地图**（内容=`ADCOIN:<短码>`，拿在手上扫码即可）。
+
+## POST /api/v1/link-long
+
+凭长期令牌直接（重）绑定——换设备/重装 App 后恢复，无需回游戏抢 5 分钟短码。
+
+请求：`{ "appUserId", "longToken", "ts", "sig" }`
+响应：
+- `200`：`{ "ok": true, "playerName", "playerUuid", "longToken" }`（**令牌轮换**，旧令牌作废）
+- `401 token_invalid` —— 令牌不存在/已作废
+- `409 app_already_bound` —— 该 app 已绑别的玩家
 
 ## POST /api/v1/unlink
 
-请求：`{ "appUserId", "ts", "sig" }` → `200 { "ok": true, "unlinked": bool }`
+**必须出示长期令牌**（防止仅凭 appUserId 恶意解绑）。
+
+请求：`{ "appUserId", "longToken", "ts", "sig" }`
+→ `200 { "ok": true, "unlinked": bool }`；`403 token_mismatch`；旧数据（绑定时无令牌）跳过校验兼容。
 
 ## POST /api/v1/reward
 

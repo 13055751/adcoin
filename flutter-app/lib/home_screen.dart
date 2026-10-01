@@ -4,6 +4,7 @@ import 'ad_providers.dart';
 import 'api_client.dart';
 import 'demo_data.dart';
 import 'models.dart';
+import 'qr_scan_screen.dart';
 import 'session_store.dart';
 
 class _TxUi {
@@ -187,13 +188,28 @@ class _HomeScreenState extends State<HomeScreen> {
               textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(labelText: '绑定码', border: OutlineInputBorder()),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.qr_code_scanner, size: 18),
+                label: const Text('扫描二维码地图'),
+                onPressed: () async {
+                  final raw = await Navigator.of(c, rootNavigator: true).push<String>(
+                    MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                  );
+                  if (raw != null) {
+                    controller.text = _stripQrPrefix(raw);
+                  }
+                },
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(c).pop(), child: const Text('取消')),
           FilledButton(
             onPressed: () {
-              final v = controller.text.trim().toUpperCase();
+              final v = _stripQrPrefix(controller.text).toUpperCase();
               if (v.length >= 4) Navigator.of(c).pop(v);
             },
             child: const Text('绑定'),
@@ -637,6 +653,10 @@ class _TxRow extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------- 格式化
+
+/// 去掉二维码内容前缀（游戏内地图二维码 = "ADCOIN:<短码>"）。
+String _stripQrPrefix(String raw) =>
+    raw.trim().replaceFirst(RegExp(r'^ADCOIN:', caseSensitive: false), '').trim();
 
 String _fmtNum(double v) {
   final s = v == v.roundToDouble()

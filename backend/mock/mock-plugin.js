@@ -19,6 +19,8 @@ const codes = new Map();    // code -> {uuid, name}
 const friends = new Map();  // uuid -> Set<uuid>
 const ledger = new Set();   // txId
 const ledgerRows = [];      // 动态流：{playerUuid, txId, amount, adNetwork, ts, fromAppUserId?}
+const tokenOwners = new Map(); // longToken -> {uuid, name}
+const appTokens = new Map();   // appUserId -> longToken
 
 let uid = 1;
 
@@ -50,11 +52,38 @@ app.post('/api/v1/link', (req, res) => {
     codes.set(key, b);
   }
   bindings.set(appUserId, b);
-  res.json({ ok: true, playerName: b.name, playerUuid: b.uuid });
+  // 长期令牌：签发 + 记录归属（与真实插件一致）
+  const longToken = crypto.randomBytes(48).toString('hex');
+  tokenOwners.set(longToken, b);
+  appTokens.set(appUserId, longToken);
+  res.json({ ok: true, playerName: b.name, playerUuid: b.uuid, longToken });
+});
+
+app.post('/api/v1/link-long', (req, res) => {
+  const { appUserId, longToken } = req.body || {};
+  const owner = tokenOwners.get(longToken);
+  if (!owner) return res.status(401).json({ ok: false, error: 'token_invalid' });
+  const cur = appTokens.get(appUserId);
+  if (cur && cur !== longToken && bindings.has(appUserId) &&
+      bindings.get(appUserId).uuid !== owner.uuid) {
+    return res.status(409).json({ ok: false, error: 'app_already_bound' });
+  }
+  bindings.set(appUserId, owner);
+  tokenOwners.delete(longToken); // 轮换：旧令牌作废
+  const fresh = crypto.randomBytes(48).toString('hex');
+  tokenOwners.set(fresh, owner);
+  appTokens.set(appUserId, fresh);
+  res.json({ ok: true, playerName: owner.name, playerUuid: owner.uuid, longToken: fresh });
 });
 
 app.post('/api/v1/unlink', (req, res) => {
-  const removed = bindings.delete((req.body || {}).appUserId);
+  const { appUserId, longToken } = req.body || {};
+  const stored = appTokens.get(appUserId);
+  if (stored && stored !== longToken) {
+    return res.status(403).json({ ok: false, error: 'token_mismatch' }); // 与真实插件一致
+  }
+  const removed = bindings.delete(appUserId);
+  appTokens.delete(appUserId);
   res.json({ ok: true, unlinked: removed });
 });
 

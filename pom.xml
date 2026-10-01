@@ -79,6 +79,13 @@
             </exclusions>
         </dependency>
 
+        <!-- ZXing：二维码生成（/adlink 地图二维码），shade + relocate -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
         <!-- 测试 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -117,6 +124,10 @@
                                 <relocation>
                                     <pattern>com.google.gson</pattern>
                                     <shadedPattern>dev.adcoin.libs.gson</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.zxing</pattern>
+                                    <shadedPattern>dev.adcoin.libs.zxing</shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>

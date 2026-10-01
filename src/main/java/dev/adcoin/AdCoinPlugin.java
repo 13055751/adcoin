@@ -11,6 +11,7 @@ import dev.adcoin.http.ApiServer;
 import dev.adcoin.link.LinkCodeService;
 import dev.adcoin.msg.Messages;
 import dev.adcoin.papi.AdCoinExpansion;
+import dev.adcoin.qr.QrMapService;
 import dev.adcoin.social.OnlineTracker;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -32,6 +33,7 @@ public final class AdCoinPlugin extends JavaPlugin {
     private VaultBridge vaultBridge;
     private ApiServer apiServer;
     private OnlineTracker onlineTracker;
+    private QrMapService qrMapService;
     private boolean papiRegistered;
 
     @Override
@@ -49,6 +51,7 @@ public final class AdCoinPlugin extends JavaPlugin {
         vaultBridge.init();
         this.onlineTracker = new OnlineTracker(store);
         onlineTracker.register(this);
+        this.qrMapService = new QrMapService(this);
 
         guardCommand("adlink", new AdLinkCommand(this));
         guardCommand("adcoin", new AdCoinCommand(this));
@@ -168,5 +171,9 @@ public final class AdCoinPlugin extends JavaPlugin {
 
     public OnlineTracker onlineTracker() {
         return onlineTracker;
+    }
+
+    public QrMapService qrMapService() {
+        return qrMapService;
     }
 }

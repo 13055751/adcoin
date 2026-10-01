@@ -84,10 +84,18 @@ const main = async () => {
     // 绑定（真实插件要求先绑定再领奖）
     const bindA = await api('POST', '/api/link/bind', { code: 'ABC12345' }, tokenA);
     check('alice 绑定', bindA.ok && bindA.user.linkedPlayerName, JSON.stringify(bindA));
+    check('绑定签发长期令牌(96位hex)', typeof bindA.longToken === 'string' && bindA.longToken.length === 96, `len=${bindA.longToken?.length}`);
     const bindB = await api('POST', '/api/link/bind', { code: 'XYZ98765' }, tokenB);
     check('bob 绑定', bindB.ok);
     const bindDup = await api('POST', '/api/link/bind', { code: 'ABC12345' }, tokenA);
     check('重复绑定被拒', bindDup.error === 'already_linked');
+    const meToken = await api('GET', '/api/me', null, tokenA);
+    check('/me 暴露 hasToken', meToken.hasToken === true);
+
+    // 长期令牌直接重绑（换设备场景，绑定态不中断）
+    const rebind = await api('POST', '/api/link/bind-long', {}, tokenA);
+    check('长期令牌重绑成功', rebind.ok && rebind.user.linkedPlayerName, JSON.stringify(rebind));
+    check('重绑轮换令牌', typeof rebind.longToken === 'string' && rebind.longToken !== bindA.longToken);
 
     // 看广告（mock）→ 发币
     const claim1 = await api('POST', '/api/ad/claim', { platform: 'mock', transactionId: 't-001', adUnitId: 'mock-unit' }, tokenA);
@@ -122,9 +130,13 @@ const main = async () => {
     const lb = await api('GET', '/api/leaderboard', null, tokenA);
     check('排行榜返回', lb.ok && Array.isArray(lb.top) && lb.top.length > 0, JSON.stringify(lb));
 
-    // 解绑
+    // 解绑（必须携带长期令牌）
     const un = await api('POST', '/api/link/unbind', {}, tokenA);
     check('alice 解绑', un.ok && un.unlinked === true);
+    const meAfter = await api('GET', '/api/me', null, tokenA);
+    check('解绑后令牌被吊销', meAfter.hasToken === false);
+    const rebind2 = await api('POST', '/api/link/bind-long', {}, tokenA);
+    check('吊销后重绑被拒(no_token)', rebind2.error === 'no_token', JSON.stringify(rebind2));
 
     console.log(failures === 0 ? '\n✅ 冒烟测试全部通过' : `\n❌ ${failures} 项失败`);
     process.exitCode = failures === 0 ? 0 : 1;

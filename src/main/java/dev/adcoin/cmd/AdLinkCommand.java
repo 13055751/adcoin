@@ -3,6 +3,8 @@ package dev.adcoin.cmd;
 import dev.adcoin.AdCoinPlugin;
 import dev.adcoin.link.LinkCodeService;
 import dev.adcoin.msg.Messages;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -51,12 +53,26 @@ public final class AdLinkCommand implements CommandExecutor, TabCompleter {
         LinkCodeService.GenResult r = plugin.linkService()
                 .generate(player.getUniqueId(), player.getName(), System.currentTimeMillis());
         switch (r.type()) {
-            case NEW -> m.send(player, "link-created", Map.of(
-                    "code", r.code(), "ttl", String.valueOf(r.ttlSeconds())));
-            case REUSED -> m.send(player, "link-reused", Map.of(
-                    "code", r.code(), "ttl", String.valueOf(r.ttlSeconds())));
+            case NEW -> {
+                m.send(player, "link-created", Map.of(
+                        "code", r.code(), "ttl", String.valueOf(r.ttlSeconds())));
+                giveQr(player, r.code());
+            }
+            case REUSED -> {
+                m.send(player, "link-reused", Map.of(
+                        "code", r.code(), "ttl", String.valueOf(r.ttlSeconds())));
+                giveQr(player, r.code());
+            }
             case COOLDOWN -> m.send(player, "link-cooldown", Map.of(
                     "seconds", String.valueOf(r.ttlSeconds())));
+        }
+    }
+
+    /** 地图二维码（失败只记日志，聊天字符码不受影响）。 */
+    private void giveQr(Player player, String code) {
+        if (plugin.qrMapService() != null && plugin.qrMapService().giveOrRefresh(player, code)) {
+            player.sendMessage(Component.text(
+                    "已给你一张二维码地图（拿在手上扫码即可绑定）。", NamedTextColor.GRAY));
         }
     }
 
@@ -71,6 +87,7 @@ public final class AdLinkCommand implements CommandExecutor, TabCompleter {
             long remaining = (plugin.dataStore().pendingLink(code.get()).orElseThrow().expiresAt()
                     - System.currentTimeMillis() + 999) / 1000;
             m.send(player, "link-reused", Map.of("code", code.get(), "ttl", String.valueOf(Math.max(1, remaining))));
+            giveQr(player, code.get()); // 状态查询也补发/刷新二维码地图
             return;
         }
         m.send(player, "link-not-bound", null);

@@ -12,9 +12,14 @@ export const pluginApi = {
       (ts) => canonical.link(code, appUserId, ts));
   },
 
-  unlink(appUserId) {
-    return callPlugin('/api/v1/unlink', { appUserId },
-      (ts) => canonical.unlink(appUserId, ts));
+  linkLong(appUserId, longToken) {
+    return callPlugin('/api/v1/link-long', { appUserId, longToken },
+      (ts) => canonical.linkLong(appUserId, longToken, ts));
+  },
+
+  unlink(appUserId, longToken) {
+    return callPlugin('/api/v1/unlink', { appUserId, longToken: longToken ?? '' },
+      (ts) => canonical.unlink(appUserId, longToken, ts));
   },
 
   friend(action, appUserId, otherAppUserId) {

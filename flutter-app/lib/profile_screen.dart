@@ -82,6 +82,31 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // 长期令牌恢复绑定（换设备/重装后无需回游戏抢短码）
+                if (s != null && s.linkedPlayerName == null)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.link),
+                      label: const Text('恢复绑定（长期令牌）'),
+                      onPressed: () async {
+                        api.setToken(s.token);
+                        try {
+                          final r = await api.bindLong();
+                          if (r.ok) {
+                            final name = r.user?.linkedPlayerName;
+                            SessionStore.updateLinked(name);
+                            _snack(context, '已恢复绑定：${name ?? "?"}');
+                          } else {
+                            _snack(context, r.error ?? '恢复失败（可能需先用短码绑定）');
+                          }
+                        } catch (e) {
+                          _snack(context, '恢复失败: $e');
+                        }
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(

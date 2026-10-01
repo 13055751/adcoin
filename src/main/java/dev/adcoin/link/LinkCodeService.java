@@ -90,7 +90,8 @@ public final class LinkCodeService {
         if (playerApp.isPresent() && !playerApp.get().equals(appUserId)) {
             return ResolveResult.of(ResolveResult.Type.PLAYER_ALREADY_BOUND);
         }
-        Binding binding = new Binding(pending.playerUuid(), pending.playerName(), nowMillis);
+        Binding binding = new Binding(pending.playerUuid(), pending.playerName(), nowMillis,
+                Binding.newLongToken());
         store.bind(appUserId, binding);
         store.removePendingLink(key);
         store.save();

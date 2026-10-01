@@ -12,9 +12,12 @@ OVERLAY="$(cd "$(dirname "$0")" && pwd)/android-overlay/res"
 
 ADMOB_APP_ID="${ADMOB_APP_ID:-ca-app-pub-3940256099942544~3347511713}"
 
-# --- manifest：补 INTERNET（release 模板默认没有）+ AdMob App ID ---
+# --- manifest：补 INTERNET + CAMERA（扫码）+ AdMob App ID ---
 if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
   sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET" />\n    <application#' "$MANIFEST"
+fi
+if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+  sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' "$MANIFEST"
 fi
 if ! grep -q "com.google.android.gms.ads.APPLICATION_ID" "$MANIFEST"; then
   sed -i "s#</application>#    <meta-data android:name=\"com.google.android.gms.ads.APPLICATION_ID\" android:value=\"$ADMOB_APP_ID\" />\n    </application>#" "$MANIFEST"

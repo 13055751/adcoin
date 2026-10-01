@@ -43,6 +43,7 @@ router.get('/api/me', requireAuth, async (req, res) => {
       dailyLimit: linked ? (pluginRes.json.dailyLimit ?? 20) : 20,
       adReward: config.adRewardAmount,
       linked: Boolean(user.linkedPlayerUuid),
+      hasToken: Boolean(user.longToken),
     });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
@@ -106,8 +107,30 @@ router.post('/api/link/bind', requireAuth, async (req, res) => {
       linkedPlayerUuid: pluginRes.json.playerUuid,
       linkedPlayerName: pluginRes.json.playerName,
       linkedAt: Date.now(),
+      longToken: pluginRes.json.longToken || null, // 短码校验通过 → 保存长期令牌
     });
-    res.json({ ok: true, user: publicUser(user) });
+    res.json({ ok: true, user: publicUser(user), longToken: user.longToken });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
+  }
+});
+
+// 长期令牌直接（重）绑定：换设备/重装后恢复
+router.post('/api/link/bind-long', requireAuth, async (req, res) => {
+  try {
+    if (!req.user.longToken) throw err(404, 'no_token', '还没有可用的长期令牌（需先用短码绑定过）');
+    const pluginRes = await pluginApi.linkLong(req.user.appUserId, req.user.longToken);
+    if (!pluginRes.json.ok) {
+      res.status(pluginRes.status || 502).json(pluginRes.json);
+      return;
+    }
+    const user = db.updateUser(req.user.id, {
+      linkedPlayerUuid: pluginRes.json.playerUuid,
+      linkedPlayerName: pluginRes.json.playerName,
+      linkedAt: Date.now(),
+      longToken: pluginRes.json.longToken || req.user.longToken, // 轮换后的令牌
+    });
+    res.json({ ok: true, user: publicUser(user), longToken: user.longToken });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
   }
@@ -115,8 +138,13 @@ router.post('/api/link/bind', requireAuth, async (req, res) => {
 
 router.post('/api/link/unbind', requireAuth, async (req, res) => {
   try {
-    const pluginRes = await pluginApi.unlink(req.user.appUserId);
-    db.updateUser(req.user.id, { linkedPlayerUuid: null, linkedPlayerName: null, linkedAt: null });
+    // 解绑必须出示长期令牌
+    const pluginRes = await pluginApi.unlink(req.user.appUserId, req.user.longToken || '');
+    if (!pluginRes.json.ok) {
+      res.status(pluginRes.status || 502).json(pluginRes.json);
+      return;
+    }
+    db.updateUser(req.user.id, { linkedPlayerUuid: null, linkedPlayerName: null, linkedAt: null, longToken: null });
     res.json({ ok: true, unlinked: pluginRes.json.unlinked });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
