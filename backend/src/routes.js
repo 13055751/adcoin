@@ -34,10 +34,14 @@ router.get('/api/me', requireAuth, async (req, res) => {
   try {
     const user = req.user;
     const pluginRes = await pluginApi.balance(user.appUserId);
+    const linked = pluginRes.json.ok && pluginRes.json.linked;
     res.json({
       ok: true,
       user: publicUser(user),
-      balance: pluginRes.json.ok && pluginRes.json.linked ? pluginRes.json.balance : 0,
+      balance: linked ? pluginRes.json.balance : 0,
+      dailyUsed: linked ? (pluginRes.json.dailyUsed ?? 0) : 0,
+      dailyLimit: linked ? (pluginRes.json.dailyLimit ?? 20) : 20,
+      adReward: config.adRewardAmount,
       linked: Boolean(user.linkedPlayerUuid),
     });
   } catch (e) {
@@ -155,6 +159,15 @@ router.get('/api/leaderboard', requireAuth, async (req, res) => {
 });
 
 // ============================================================ 转账
+
+router.get('/api/transactions', requireAuth, async (req, res) => {
+  try {
+    const pluginRes = await pluginApi.ledger(req.user.appUserId);
+    res.status(pluginRes.status || 200).json(pluginRes.json);
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.code || 'internal' });
+  }
+});
 
 router.post('/api/transfer', requireAuth, async (req, res) => {
   try {

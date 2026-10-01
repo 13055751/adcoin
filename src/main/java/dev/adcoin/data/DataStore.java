@@ -140,6 +140,23 @@ public final class DataStore {
         }
     }
 
+    /** 某玩家的账本记录（时间正序，取最近 limit 条）。 */
+    public List<LedgerEntry> ledgerFor(UUID player, int limit) {
+        synchronized (lock) {
+            String key = player.toString();
+            List<LedgerEntry> all = new ArrayList<>();
+            for (LedgerEntry e : ledger.values()) {
+                if (key.equals(e.playerUuid())) {
+                    all.add(e);
+                }
+            }
+            if (all.size() > limit) {
+                return new ArrayList<>(all.subList(all.size() - limit, all.size()));
+            }
+            return all;
+        }
+    }
+
     public int dailyCount(UUID player, String date) {
         synchronized (lock) {
             Map<String, Integer> m = dailyCounts.get(player.toString());

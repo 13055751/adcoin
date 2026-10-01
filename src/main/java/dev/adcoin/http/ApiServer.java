@@ -19,7 +19,9 @@ import java.util.concurrent.Executors;
  *   <li>POST /api/v1/unlink   — 解绑</li>
  *   <li>POST /api/v1/friend   — 好友请求/接受/拒绝/删除/列表</li>
  *   <li>POST /api/v1/transfer — App 端好友转币（幂等）</li>
- *   <li>POST /api/v1/balance  — 查询绑定与余额</li>
+ *   <li>POST /api/v1/balance  — 查询绑定与余额（含 dailyUsed 今日已看次数）</li>
+ *   <li>POST /api/v1/top      — 余额排行榜</li>
+ *   <li>POST /api/v1/ledger   — 最近账本记录（App 动态流）</li>
  *   <li>GET  /health          — 存活检查</li>
  * </ul>
  */
@@ -45,6 +47,7 @@ public final class ApiServer {
         server.createContext("/api/v1/transfer", new TransferHandler(context));
         server.createContext("/api/v1/balance", new BalanceHandler(context));
         server.createContext("/api/v1/top", new TopHandler(context));
+        server.createContext("/api/v1/ledger", new LedgerHandler(context));
         server.createContext("/health", new HealthHandler(context));
         executor = Executors.newFixedThreadPool(cfg.threads());
         server.setExecutor(executor);

@@ -92,6 +92,11 @@ public final class Signer {
         return "top\n" + ts;
     }
 
+    /** /api/v1/ledger 的 canonical 串。 */
+    public static String ledgerCanonical(String appUserId, long ts) {
+        return "ledger\n" + appUserId + "\n" + ts;
+    }
+
     /**
      * 金额规范化：去尾零的十进制字面量。50.0 -> "50"；50.5 -> "50.5"。
      * 与后端约定：canonical 里的金额 = JSON 数值解析后的十进制字符串（JS 侧 String(number) 即无尾零）。

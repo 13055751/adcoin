@@ -39,11 +39,14 @@ public final class BalanceHandler extends BaseHandler {
         }
         Binding b = binding.get();
         double balance = ctx.currency().balance(b.uuid());
+        int dailyUsed = ctx.plugin().dataStore().dailyCount(b.uuid(), java.time.LocalDate.now().toString());
         respond(ex, 200, Map.of(
                 "ok", true,
                 "linked", true,
                 "playerName", b.playerName(),
                 "playerUuid", b.playerUuid(),
-                "balance", balance));
+                "balance", balance,
+                "dailyUsed", dailyUsed,
+                "dailyLimit", ctx.cfg().dailyPerPlayer()));
     }
 }

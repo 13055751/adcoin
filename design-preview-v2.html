@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>AdCoin UI v2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0C0D12; color: #E6E1E5;
+    padding: 32px 28px 24px;
+  }
+  h1 { text-align: center; font-size: 20px; color: #fff; margin-bottom: 4px; letter-spacing: .5px; }
+  .sub { text-align: center; color: #9a97a0; font-size: 12px; margin-bottom: 22px; }
+  .row { display: flex; gap: 26px; justify-content: center; }
+
+  .phone {
+    width: 372px; border: 2px solid #46405A; border-radius: 34px;
+    overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  .phone.dark { background: #16141F; }
+  .phone.light { background: #FBF8FF; border-color: #c9c0d6; }
+  .label { text-align: center; padding: 8px 0 6px; font-size: 12px; letter-spacing: 2px; font-weight: 700; }
+  .dark .label { color: #CFBCFF; } .light .label { color: #6750A4; }
+  .screen { display: flex; flex-direction: column; min-height: 740px; padding: 0 18px; }
+  .icon { width: 22px; height: 22px; fill: currentColor; }
+  .icon-s { width: 18px; height: 18px; fill: currentColor; }
+  .icon-xs { width: 15px; height: 15px; fill: currentColor; }
+
+  .statusbar { display: flex; justify-content: space-between; padding: 10px 4px 6px; font-size: 13px; font-weight: 600; }
+  .dark .statusbar { color: #E6E1E5; } .light .statusbar { color: #1D1B20; }
+
+  /* ================= 方案 A ================= */
+  .a-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 12px; }
+  .a-top .t { font-size: 24px; font-weight: 700; }
+  .dark .a-top .t { color: #FEF7FF; } .light .a-top .t { color: #1D1B20; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+  .dark .chip { background: #2A2737; color: #CFBCFF; }
+  .light .chip { background: #EFE7FF; color: #5A2FD0; }
+
+  .hero {
+    border-radius: 22px; padding: 20px; color: #fff;
+    background: linear-gradient(135deg, #6A3CE8 0%, #9A3BC4 55%, #D14B8A 100%);
+    box-shadow: 0 12px 30px rgba(106,60,232,.35);
+    position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position: absolute; right: -34px; top: -34px; width: 130px; height: 130px;
+    border-radius: 50%; background: rgba(255,255,255,.13);
+  }
+  .hero .cap { font-size: 12px; opacity: .85; letter-spacing: .5px; }
+  .hero .num { font-size: 50px; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+  .hero .meta { display: flex; gap: 8px; margin-top: 10px; }
+  .hero .pill { font-size: 11px; font-weight: 600; background: rgba(255,255,255,.22); padding: 4px 10px; border-radius: 999px; }
+  .hero .coin {
+    position: absolute; right: 18px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%;
+    background: linear-gradient(135deg,#FFD54F,#FFA000); display: flex; align-items: center; justify-content: center;
+    color: #5D4300; font-size: 26px; font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.3);
+  }
+
+  .cta {
+    margin-top: 12px; border-radius: 18px; padding: 15px 18px; color: #fff;
+    background: linear-gradient(90deg, #F43F5E, #E11D62);
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 22px rgba(244,63,94,.32);
+  }
+  .cta .play {
+    width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cta .l1 { font-size: 16px; font-weight: 700; }
+  .cta .l2 { font-size: 11px; opacity: .9; margin-top: 1px; }
+  .cta .arrow { margin-left: auto; opacity: .8; }
+
+  .qrow { display: flex; gap: 10px; margin-top: 12px; }
+  .qrow .q {
+    flex: 1; background: #221F2E; border: 1px solid #35314A; border-radius: 14px;
+    padding: 11px 10px; text-align: center;
+  }
+  .light .qrow .q { background: #F3EDFB; border-color: #E4D9F5; }
+  .qrow .q .v { font-size: 15px; font-weight: 700; color: #CFBCFF; }
+  .light .qrow .q .v { color: #5A2FD0; }
+  .qrow .q .k { font-size: 10px; color: #938F99; margin-top: 3px; }
+  .light .qrow .q .k { color: #6B6577; }
+  .qrow .q .ic { display: flex; justify-content: center; margin-bottom: 5px; color: #CBC2DB; }
+  .light .qrow .q .ic { color: #6750A4; }
+
+  .feed { margin-top: 12px; flex: 1; background: #1E1B2A; border: 1px solid #302C42; border-radius: 18px; padding: 6px 16px 14px; }
+  .light .feed { background: #F7F2FE; border-color: #EBE1F8; }
+  .feed .fh { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 4px; }
+  .feed .fh .ft { font-size: 14px; font-weight: 700; color: #E6E1E5; }
+  .light .feed .fh .ft { color: #1D1B20; }
+  .feed .fh .more { font-size: 11px; color: #CFBCFF; }
+  .light .feed .fh .more { color: #5A2FD0; }
+  .frow { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid #2C283C; }
+  .light .frow { border-top-color: #EDE4F7; }
+  .ftile { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .dark .ftile { background: #2E2A3F; color: #CFBCFF; }
+  .light .ftile { background: #EBE1F8; color: #5A2FD0; }
+  .frow .tx { flex: 1; font-size: 13px; color: #E6E1E5; }
+  .light .frow .tx { color: #1D1B20; }
+  .frow .tx small { display: block; font-size: 10px; color: #938F99; margin-top: 1px; }
+  .frow .amt { font-size: 14px; font-weight: 700; }
+  .amt.up { color: #8CE99A; } .light .amt.up { color: #1B7F3B; }
+  .amt.down { color: #FFA3AD; } .light .amt.down { color: #BA1A1A; }
+
+  .limit { display: flex; align-items: center; gap: 10px; padding-top: 11px; margin-top: 3px; border-top: 1px dashed #3A3550; }
+  .light .limit { border-top-color: #E0D4F0; }
+  .limit .lt { font-size: 11px; color: #938F99; flex-shrink: 0; }
+  .bar { flex: 1; height: 7px; border-radius: 4px; background: #322E44; overflow: hidden; }
+  .light .bar { background: #E5DAF5; }
+  .bar > i { display: block; height: 100%; width: 15%; background: linear-gradient(90deg,#7C3AED,#B14BE0); border-radius: 4px; }
+  .limit .lv { font-size: 11px; font-weight: 700; color: #CFBCFF; }
+  .light .limit .lv { color: #5A2FD0; }
+
+  .nav {
+    display: flex; margin: 12px -18px 0; padding: 8px 12px;
+    background: #1A1726; border-top: 1px solid #2C283C;
+  }
+  .light .nav { background: #F3EDFB; border-top-color: #E4D9F5; }
+  .nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #938F99; position: relative; padding-top: 4px; }
+  .nav .tab .pill { display: flex; align-items: center; justify-content: center; height: 28px; width: 56px; border-radius: 14px; }
+  .nav .tab.on { color: #CFBCFF; font-weight: 700; }
+  .light .nav .tab.on { color: #5A2FD0; }
+  .dark .nav .tab.on .pill { background: #453D63; }
+  .light .nav .tab.on .pill { background: #E0D3FB; }
+  .nav .badge {
+    position: absolute; top: 0; right: 26px; background: #F43F5E; color: #fff;
+    font-size: 9px; font-weight: 700; min-width: 15px; height: 15px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  }
+
+  /* ================= 方案 B ================= */
+  .b-app { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 14px; }
+  .b-app .t { font-size: 27px; font-weight: 600; }
+  .dark .b-app .t { color: #FEF7FF; } .light .b-app .t { color: #1D1B20; }
+  .b-app .acts { display: flex; gap: 8px; }
+  .b-app .ib { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; }
+  .dark .b-app .ib { background: #262333; color: #CAC4D0; }
+  .light .b-app .ib { background: #EFE8F9; color: #49454F; }
+  .b-app .ib .dot { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; background: #F43F5E; border-radius: 50%; border: 2px solid; }
+  .dark .b-app .ib .dot { border-color: #262333; } .light .b-app .ib .dot { border-color: #EFE8F9; }
+
+  .b-bal { padding: 4px 2px 0; }
+  .b-bal .cap { font-size: 12px; font-weight: 600; letter-spacing: .8px; }
+  .dark .b-bal .cap { color: #CAC4D0; } .light .b-bal .cap { color: #5D5768; }
+  .b-bal .nl { display: flex; align-items: baseline; gap: 12px; }
+  .b-bal .num { font-size: 56px; font-weight: 800; letter-spacing: -1px; }
+  .dark .b-bal .num { color: #FEF7FF; } .light .b-bal .num { color: #1D1B20; }
+  .b-bal .trend { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+  .dark .b-bal .trend { background: #1E3A24; color: #8CE99A; }
+  .light .b-bal .trend { background: #DCF5E3; color: #1B7F3B; }
+  .b-bal .unit { font-size: 13px; color: #938F99; margin-top: 2px; }
+
+  .b-cta { display: flex; gap: 10px; margin-top: 16px; }
+  .b-cta .main {
+    flex: 1; border-radius: 999px; padding: 16px 20px; background: #6A3CE8; color: #fff;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    font-size: 15px; font-weight: 700; box-shadow: 0 8px 20px rgba(106,60,232,.3);
+  }
+  .light .b-cta .main { background: #6A3CE8; }
+  .b-cta .sq {
+    width: 54px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+  }
+  .dark .b-cta .sq { background: #262333; color: #CFBCFF; }
+  .light .b-cta .sq { background: #EFE8F9; color: #5A2FD0; }
+
+  .prog { margin-top: 14px; border-radius: 16px; padding: 13px 16px; }
+  .dark .prog { background: #1F1C2B; border: 1px solid #302C42; }
+  .light .prog { background: #F3EDFB; border: 1px solid #E4D9F5; }
+  .prog .pr { display: flex; justify-content: space-between; font-size: 12px; }
+  .prog .pr b { color: #CFBCFF; } .light .prog .pr b { color: #5A2FD0; }
+  .dark .prog .pr { color: #CAC4D0; } .light .prog .pr { color: #49454F; }
+  .prog .bar { margin-top: 9px; }
+
+  .b-sec { font-size: 13px; font-weight: 700; margin: 16px 2px 8px; }
+  .dark .b-sec { color: #E6E1E5; } .light .b-sec { color: #1D1B20; }
+
+  .b-quick { display: flex; gap: 10px; }
+  .b-quick .k {
+    flex: 1; border-radius: 16px; padding: 13px 12px; text-align: left;
+  }
+  .dark .b-quick .k { background: #262333; }
+  .light .b-quick .k { background: #F3EDFB; border: 1px solid #E4D9F5; }
+  .b-quick .k .ic { color: #B39DF8; }
+  .light .b-quick .k .ic { color: #6750A4; }
+  .b-quick .k .v { font-size: 14px; font-weight: 700; margin-top: 7px; }
+  .dark .b-quick .k .v { color: #E6E1E5; } .light .b-quick .k .v { color: #1D1B20; }
+  .b-quick .k .s { font-size: 10px; margin-top: 2px; color: #938F99; }
+  .light .b-quick .k .s { color: #6B6577; }
+
+  .b-list { flex: 1; }
+  .b-item { display: flex; align-items: center; gap: 11px; padding: 10px 2px; }
+  .b-item .dotc { width: 30px; display: flex; justify-content: center; flex-shrink: 0; }
+  .b-item .line { flex: 1; }
+  .b-item .t1 { font-size: 13.5px; }
+  .dark .b-item .t1 { color: #E6E1E5; } .light .b-item .t1 { color: #1D1B20; }
+  .b-item .t2 { font-size: 10.5px; color: #938F99; margin-top: 1px; }
+  .b-item .v { font-size: 14px; font-weight: 700; }
+  .b-item .sep { flex: 1; border-bottom: 1px dashed; opacity: .35; margin: 0 4px 4px; align-self: flex-end; }
+  .dark .b-item .sep { border-color: #49454F; } .light .b-item .sep { border-color: #CAC4D0; }
+
+  .foot { text-align: center; margin-top: 18px; color: #6f6a7a; font-size: 11px; }
+</style>
+</head>
+<body>
+<h1>AdCoin 界面重做 · 2 个方向（M3）</h1>
+<div class="sub">A · 活力卡牌（渐变 Hero + 紧凑密度）&nbsp;&nbsp;|&nbsp;&nbsp;B · 清爽钱包（大数字 + 时间线）</div>
+
+<div class="row">
+
+  <!-- ============ 方案 A ============ -->
+  <div class="phone dark">
+    <div class="label">A · 活力卡牌（深色）</div>
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="a-top">
+        <div class="t">AdCoin</div>
+        <div class="chip">未登录 · 登录</div>
+      </div>
+
+      <div class="hero">
+        <div class="cap">可用余额</div>
+        <div class="num">1,288</div>
+        <div class="meta">
+          <span class="pill">adcoins</span>
+          <span class="pill">今日 +150</span>
+          <span class="pill">排名 #3</span>
+        </div>
+        <div class="coin">$</div>
+      </div>
+
+      <div class="cta">
+        <div class="play"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div>
+          <div class="l1">看广告赚 adcoins</div>
+          <div class="l2">约 30 秒 · 每次 +50 · 今日已看 3 次</div>
+        </div>
+        <svg class="icon arrow" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+      </div>
+
+      <div class="qrow">
+        <div class="q">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zM17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></div>
+          <div class="v">Steve</div><div class="k">已绑定</div>
+        </div>
+        <div class="q">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+          <div class="v">3 · 2 在线</div><div class="k">好友</div>
+        </div>
+        <div class="q">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>
+          <div class="v">第 3 名</div><div class="k">排行榜</div>
+        </div>
+      </div>
+
+      <div class="feed">
+        <div class="fh"><span class="ft">最近动态</span><span class="more">全部 ›</span></div>
+        <div class="frow">
+          <div class="ftile"><svg class="icon-s" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tx">看广告获得奖励<small>09:20</small></div>
+          <div class="amt up">+50</div>
+        </div>
+        <div class="frow">
+          <div class="ftile"><svg class="icon-s" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+          <div class="tx">转出给 Alex<small>09:15</small></div>
+          <div class="amt down">-20</div>
+        </div>
+        <div class="frow">
+          <div class="ftile"><svg class="icon-s" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="tx">看广告获得奖励<small>昨天 21:04</small></div>
+          <div class="amt up">+50</div>
+        </div>
+        <div class="limit">
+          <span class="lt">今日次数</span>
+          <div class="bar"><i></i></div>
+          <span class="lv">3 / 20</span>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="tab on"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>首页</div>
+        <div class="tab"><div class="badge">2</div><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>好友</div>
+        <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>排行</div>
+        <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>我的</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 方案 B ============ -->
+  <div class="phone light">
+    <div class="label">B · 清爽钱包（浅色）</div>
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="b-app">
+        <div class="t">AdCoin</div>
+        <div class="acts">
+          <div class="ib"><svg class="icon-s" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><i class="dot"></i></div>
+          <div class="ib"><svg class="icon-s" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+        </div>
+      </div>
+
+      <div class="b-bal">
+        <div class="cap">ADCOINS 余额</div>
+        <div class="nl">
+          <div class="num">1,288</div>
+          <span class="trend">▲ 今日 +150</span>
+        </div>
+        <div class="unit">≈ 可兑换 12.8 元赞助礼包 · 已绑定 Steve</div>
+      </div>
+
+      <div class="b-cta">
+        <div class="main"><svg class="icon-s" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 看广告赚 50 adcoins</div>
+        <div class="sq"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>
+      </div>
+
+      <div class="prog">
+        <div class="pr"><span>今日看广告进度</span><b>3 / 20 次</b></div>
+        <div class="bar"><i></i></div>
+        <div class="pr" style="margin-top:7px"><span>再看 17 次可得 850 adcoins</span></div>
+      </div>
+
+      <div class="b-sec">快捷操作</div>
+      <div class="b-quick">
+        <div class="k">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+          <div class="v">3 位好友</div><div class="s">2 人在线</div>
+        </div>
+        <div class="k">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>
+          <div class="v">第 3 名</div><div class="s">共有 12 人</div>
+        </div>
+        <div class="k">
+          <div class="ic"><svg class="icon-s" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zM17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></div>
+          <div class="v">已绑定</div><div class="s">Steve</div>
+        </div>
+      </div>
+
+      <div class="b-sec">最近动态</div>
+      <div class="b-list">
+        <div class="b-item">
+          <div class="dotc" style="color:#1B7F3B">●</div>
+          <div class="line"><div class="t1">看广告获得奖励</div><div class="t2">09:20</div></div>
+          <div class="sep"></div>
+          <div class="v" style="color:#1B7F3B">+50</div>
+        </div>
+        <div class="b-item">
+          <div class="dotc" style="color:#BA1A1A">●</div>
+          <div class="line"><div class="t1">转出给 Alex</div><div class="t2">09:15</div></div>
+          <div class="sep"></div>
+          <div class="v" style="color:#BA1A1A">-20</div>
+        </div>
+        <div class="b-item">
+          <div class="dotc" style="color:#1B7F3B">●</div>
+          <div class="line"><div class="t1">看广告获得奖励</div><div class="t2">昨天 21:04</div></div>
+          <div class="sep"></div>
+          <div class="v" style="color:#1B7F3B">+50</div>
+        </div>
+        <div class="b-item">
+          <div class="dotc" style="color:#6750A4">●</div>
+          <div class="line"><div class="t1">绑定游戏账号 Steve</div><div class="t2">昨天 20:58</div></div>
+          <div class="sep"></div>
+          <div class="v" style="color:#6750A4">✓</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="tab on"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>首页</div>
+        <div class="tab"><div class="badge">2</div><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>好友</div>
+        <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>排行</div>
+        <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>我的</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="foot">AdCoin UI v2 · Material 3 · 底部导航好友角标 2 · 每日进度条</div>
+</body>
+</html>

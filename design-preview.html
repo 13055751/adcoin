@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>AdCoin 设计方案预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0F0F23;
+    font-family: -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 40px 32px;
+    color: #E2E8F0;
+  }
+  h1 { text-align: center; font-size: 22px; margin-bottom: 6px; color: #fff; letter-spacing: 1px; }
+  .sub { text-align: center; color: #94A3B8; font-size: 13px; margin-bottom: 28px; }
+  .row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+
+  .phone {
+    width: 350px;
+    border: 2px solid #4C1D95;
+    border-radius: 34px;
+    overflow: hidden;
+    background: #0F0F23;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    display: flex;
+    flex-direction: column;
+  }
+  .phone.c-light { background: #FAFAFA; border-color: #d1d5db; }
+  .phone .label {
+    text-align: center; padding: 8px 0 4px; font-size: 12px;
+    color: #A78BFA; letter-spacing: 2px; font-weight: 600;
+  }
+  .phone.c-light .label { color: #7C3AED; }
+
+  .screen { flex: 1; position: relative; min-height: 700px; }
+  .statusbar { display: flex; justify-content: space-between; padding: 10px 22px 6px; font-size: 13px; font-weight: 600; color: #E2E8F0; }
+  .phone.c-light .statusbar { color: #111; }
+
+  /* ===== 方案 A ===== */
+  .a-top {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #27273B; border-radius: 10px; margin: 8px 12px; padding: 8px 12px;
+  }
+  .a-top span { font-size: 11px; color: #E2E8F0; }
+  .a-top b { color: #A78BFA; font-size: 11px; }
+  .a-balance {
+    margin: 10px 12px; padding: 24px 20px; border-radius: 18px;
+    background: linear-gradient(135deg, #7C3AED, #4C1D95);
+    box-shadow: 0 10px 30px rgba(124,58,237,.35);
+  }
+  .a-balance .cap { font-size: 12px; color: #D8C8FF; }
+  .a-balance .num { font-size: 52px; font-weight: 800; line-height: 1.1; letter-spacing: 1px; }
+  .a-balance .unit { font-size: 14px; color: #D8C8FF; margin-top: 4px; }
+  .a-balance .who { font-size: 12px; color: #C9B8FF; margin-top: 10px; }
+  .a-cta {
+    margin: 12px; padding: 16px; border-radius: 16px; text-align: center;
+    background: #F43F5E; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 1px;
+    box-shadow: 0 8px 24px rgba(244,63,94,.35);
+  }
+  .a-grid { display: flex; gap: 10px; margin: 12px; }
+  .a-card { flex: 1; background: #1E1C35; border: 1px solid #4C1D95; border-radius: 14px; padding: 14px 6px; text-align: center; }
+  .a-card .ic { font-size: 20px; }
+  .a-card .tx { font-size: 11px; color: #C4B5FD; margin-top: 6px; }
+  .spacer { flex: 1; }
+
+  /* ===== 方案 B ===== */
+  .b-bento { display: flex; gap: 10px; margin: 10px 12px; }
+  .b-cta { flex: 1.2; background: #F43F5E; border-radius: 16px; padding: 18px 14px; }
+  .b-cta .ic { font-size: 22px; }
+  .b-cta .tx { font-size: 13px; font-weight: 700; margin-top: 8px; }
+  .b-cta .sub2 { font-size: 11px; opacity: .9; margin-top: 2px; }
+  .b-bal { flex: 1; background: linear-gradient(135deg,#7C3AED,#4C1D95); border-radius: 16px; padding: 18px 14px; }
+  .b-bal .num { font-size: 30px; font-weight: 800; }
+  .b-bal .un { font-size: 11px; opacity: .9; }
+  .b-card { margin: 10px 12px; background: #1E1C35; border: 1px solid #4C1D95; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .b-card .l { font-size: 13px; color: #E2E8F0; }
+  .b-card .r { font-size: 12px; color: #C4B5FD; }
+  .b-hi { margin: 10px 12px; background: #1E1C35; border: 1px solid #4C1D95; border-radius: 14px; padding: 14px 16px; }
+  .b-hi .row2 { display: flex; justify-content: space-between; font-size: 13px; }
+  .b-hi .row2 small { color: #94A3B8; }
+
+  /* ===== 方案 C ===== */
+  .c-top { display: flex; justify-content: space-between; padding: 12px 16px 8px; color: #111; font-weight: 700; font-size: 17px; }
+  .c-bal { margin: 10px 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px 16px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  .c-bal .cap { font-size: 12px; color: #6b7280; }
+  .c-bal .num { font-size: 40px; font-weight: 800; color: #111; }
+  .c-bal .un { font-size: 13px; color: #7C3AED; }
+  .c-btn { margin: 12px 14px; background: #7C3AED; color: #fff; text-align: center; padding: 15px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+  .c-sec { margin: 14px 14px 6px; font-size: 13px; color: #6b7280; }
+  .c-list { margin: 0 14px; }
+  .c-item { display: flex; justify-content: space-between; padding: 11px 2px; border-bottom: 1px solid #f3f4f6; font-size: 13px; color: #111; }
+  .c-item .time { color: #9ca3af; font-size: 11px; }
+  .c-item .amt { color: #059669; font-weight: 700; }
+  .c-item .amt.out { color: #ef4444; }
+
+  /* 底部导航 */
+  .nav { display: flex; border-top: 1px solid #4C1D95; background: #12122a; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); }
+  .phone.c-light .nav { background: #fff; border-top: 1px solid #e5e7eb; }
+  .nav div { flex: 1; text-align: center; font-size: 10px; color: #94A3B8; }
+  .nav div .ni { font-size: 19px; display: block; margin-bottom: 2px; }
+  .nav div.on { color: #A78BFA; }
+  .phone.c-light .nav div.on { color: #7C3AED; }
+
+  .foot { text-align: center; margin-top: 30px; color: #64748b; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>AdCoin · 首页布局方案预览</h1>
+  <div class="sub">方案 A 游戏仪表盘 · 方案 B 沉浸式 Bento · 方案 C 极简内容流（深色霓虹紫游戏风）</div>
+
+  <div class="row">
+
+    <!-- 方案 A -->
+    <div class="phone">
+      <div class="label">方案 A · 游戏仪表盘</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="a-top"><span>未登录 · 演示数据</span><b>登录/注册</b></div>
+        <div class="a-balance">
+          <div class="cap">AdCoin 余额</div>
+          <div class="num">1,288</div>
+          <div class="unit">adcoins</div>
+          <div class="who">已绑定 · Steve（演示）</div>
+        </div>
+        <div class="a-cta">▶ 看广告 +50</div>
+        <div class="a-grid">
+          <div class="a-card"><div class="ic">🔗</div><div class="tx">绑定账号</div></div>
+          <div class="a-card"><div class="ic">👥</div><div class="tx">好友</div></div>
+          <div class="a-card"><div class="ic">🏆</div><div class="tx">排行榜</div></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="on"><span class="ni">🏠</span>首页</div>
+          <div><span class="ni">👥</span>好友</div>
+          <div><span class="ni">🏆</span>排行</div>
+          <div><span class="ni">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 B -->
+    <div class="phone">
+      <div class="label">方案 B · 沉浸式 Bento</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="b-bento">
+          <div class="b-cta"><div class="ic">▶</div><div class="tx">看广告</div><div class="sub2">+50 adcoins</div></div>
+          <div class="b-bal"><div class="num">1,288</div><div class="un">adcoins</div></div>
+        </div>
+        <div class="b-card"><span class="l">👥 好友</span><span class="r">3 人 · 2 在线</span></div>
+        <div class="b-card"><span class="l">🏆 排行榜</span><span class="r">#3 · Notch</span></div>
+        <div class="b-card"><span class="l">🔗 绑定</span><span class="r">Steve（演示）</span></div>
+        <div class="b-hi">
+          <div class="row2"><span>最近动态</span><small>全部</small></div>
+          <div class="row2" style="margin-top:10px"><small>09:20 广告奖励</small><small style="color:#7C3AED">+50</small></div>
+          <div class="row2" style="margin-top:6px"><small>09:15 转出给 Alex</small><small style="color:#F43F5E">-20</small></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="on"><span class="ni">🏠</span>首页</div>
+          <div><span class="ni">👥</span>好友</div>
+          <div><span class="ni">🏆</span>排行</div>
+          <div><span class="ni">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 C -->
+    <div class="phone c-light">
+      <div class="label">方案 C · 极简内容流</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="c-top"><span>AdCoin</span><span>⚙</span></div>
+        <div class="c-bal">
+          <div class="cap">余额</div>
+          <div class="num">1,288</div>
+          <div class="un">adcoins</div>
+        </div>
+        <div class="c-btn">▶ 看广告赚 50 adcoins</div>
+        <div class="c-sec">最近动态</div>
+        <div class="c-list">
+          <div class="c-item"><span>09:20 · 广告奖励</span><span class="amt">+50</span></div>
+          <div class="c-item"><span>09:15 · 转出给 Alex</span><span class="amt out">-20</span></div>
+          <div class="c-item"><span>昨天 · 广告奖励</span><span class="amt">+50</span></div>
+          <div class="c-item"><span>昨天 · 广告奖励</span><span class="amt">+50</span></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="on"><span class="ni">🏠</span>首页</div>
+          <div><span class="ni">👥</span>好友</div>
+          <div><span class="ni">🏆</span>排行</div>
+          <div><span class="ni">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="foot">AdCoin 设计方案 · 深色霓虹紫游戏风 · 由 ui-ux-pro-max 设计系统生成</div>
+</body>
+</html>

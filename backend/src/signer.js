@@ -21,6 +21,7 @@ export const canonical = {
     `transfer\n${txId}\n${fromApp}\n${toApp}\n${ts}\n${formatAmount(amount)}`,
   balance: (appUserId, ts) => `balance\n${appUserId}\n${ts}`,
   top: (ts) => `top\n${ts}`,
+  ledger: (appUserId, ts) => `ledger\n${appUserId}\n${ts}`,
 };
 
 /**

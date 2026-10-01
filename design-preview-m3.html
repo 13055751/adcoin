@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>AdCoin · Material 3 设计方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #121318;
+    color: #E6E1E5;
+    padding: 40px 28px;
+  }
+  h1 { text-align: center; font-size: 22px; color: #fff; letter-spacing: 1px; margin-bottom: 6px; }
+  .sub { text-align: center; color: #9a97a0; font-size: 13px; margin-bottom: 30px; }
+  .row { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; }
+
+  .phone {
+    width: 356px;
+    border: 2px solid #4a4458;
+    border-radius: 34px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 22px 60px rgba(0,0,0,.55);
+  }
+  .phone.dark { background: #15131F; }
+  .phone.light { background: #FDF7FF; border-color: #c9c0d6; }
+  .phone .label { text-align: center; padding: 9px 0 5px; font-size: 12px; letter-spacing: 2px; font-weight: 700; }
+  .phone.dark .label { color: #CFBCFF; }
+  .phone.light .label { color: #6750A4; }
+  .screen { flex: 1; min-height: 712px; display: flex; flex-direction: column; }
+  .icon { width: 22px; height: 22px; fill: currentColor; vertical-align: middle; }
+  .icon-sm { width: 20px; height: 20px; fill: currentColor; vertical-align: middle; }
+
+  .statusbar { display: flex; justify-content: space-between; padding: 10px 22px 4px; font-size: 13px; font-weight: 600; }
+  .dark .statusbar { color: #E6E1E5; }
+  .light .statusbar { color: #1D1B20; }
+
+  /* ===== M3 AppBar（大标题）===== */
+  .appbar { padding: 4px 20px 12px; }
+  .appbar .title { font-size: 28px; font-weight: 500; letter-spacing: .2px; }
+  .dark .appbar .title { color: #E6E1E5; }
+  .light .appbar .title { color: #1D1B20; }
+  .appbar .subtitle { font-size: 13px; margin-top: 2px; }
+  .dark .appbar .subtitle { color: #CAC4D0; }
+  .light .appbar .subtitle { color: #49454F; }
+
+  .pad { padding: 8px 20px; }
+  .gap8 { height: 8px; }
+
+  /* ===== M3 卡片（surfaceContainerLow 层级）===== */
+  .card { border-radius: 12px; padding: 18px 20px; }
+  .dark .card { background: #1D1B27; }
+  .light .card { background: #F7EFFA; }
+  .card .cap { font-size: 12px; font-weight: 500; letter-spacing: .3px; }
+  .dark .card .cap { color: #CAC4D0; }
+  .light .card .cap { color: #49454F; }
+  .card .num { font-size: 40px; font-weight: 700; line-height: 1.15; }
+  .dark .card .num { color: #E6E1E5; }
+  .light .card .num { color: #1D1B20; }
+  .card .unit { font-size: 13px; margin-top: 2px; }
+
+  /* primaryContainer 余额卡 */
+  .card.primary { }
+  .dark .card.primary { background: #4F378B; }
+  .light .card.primary { background: #EAE2FF; }
+  .dark .card.primary .cap, .dark .card.primary .unit { color: #EADDFF; }
+  .dark .card.primary .num { color: #FEF7FF; }
+  .light .card.primary .cap, .light .card.primary .unit { color: #270063; }
+  .light .card.primary .num { color: #270063; }
+
+  /* ===== M3 按钮分级 ===== */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; padding: 15px 20px; font-size: 15px; font-weight: 600; letter-spacing: .3px; border: none; width: 100%; }
+  .btn.filled { color: #fff; }
+  .dark .btn.filled { background: #CFBCFF; color: #381E72; }
+  .light .btn.filled { background: #6A3CE8; color: #fff; }
+  .dark .btn.tonal { background: #4A4458; color: #E8DEF8; }
+  .light .btn.tonal { background: #E8DEF8; color: #1D192B; }
+  .btn.outlined { background: transparent; border: 1px solid; }
+  .dark .btn.outlined { border-color: #938F99; color: #CFBCFF; }
+  .light .btn.outlined { border-color: #79747E; color: #6A3CE8; }
+
+  /* ===== M3 功能行（tonal 图标卡）===== */
+  .func { display: flex; gap: 12px; }
+  .func .item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; border-radius: 12px; }
+  .dark .func .item { background: #1D1B27; color: #E8DEF8; }
+  .light .func .item { background: #F7EFFA; color: #6750A4; }
+  .func .item span { font-size: 11px; }
+  .dark .func .item span { color: #CAC4D0; }
+  .light .func .item span { color: #49454F; }
+
+  /* ===== M3 列表 ===== */
+  .list-item { display: flex; align-items: center; gap: 14px; padding: 12px 0; }
+  .dark .list-item { border-bottom: 1px solid #36343F; }
+  .light .list-item { border-bottom: 1px solid #E7DDEC; }
+  .list-item .l { font-size: 14px; flex: 1; }
+  .dark .list-item .l { color: #E6E1E5; }
+  .light .list-item .l { color: #1D1B20; }
+  .list-item .r { font-size: 13px; font-weight: 600; }
+  .dark .list-item .r { color: #CFBCFF; }
+  .light .list-item .r { color: #6A3CE8; }
+  .list-item .r.out { }
+  .dark .list-item .r.out { color: #F2B8C5; }
+  .light .list-item .r.out { color: #BA1A1A; }
+  .ic-tile { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .dark .ic-tile { background: #2B2936; color: #E8DEF8; }
+  .light .ic-tile { background: #E7DDEC; color: #6750A4; }
+
+  .spacer { flex: 1; }
+
+  /* ===== M3 NavigationBar（pill 指示）===== */
+  .nav { display: flex; padding: 8px 10px; border-top: 1px solid transparent; }
+  .dark .nav { background: #15131F; }
+  .light .nav { background: #FDF7FF; }
+  .nav .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0 10px; position: relative; font-size: 11px; color: #938F99; }
+  .nav .tab .pill { display: flex; align-items: center; justify-content: center; height: 30px; width: 58px; border-radius: 16px; }
+  .nav .tab.on { color: #CFBCFF; }
+  .light .nav .tab.on { color: #6750A4; }
+  .dark .nav .tab.on .pill { background: #4A4458; }
+  .light .nav .tab.on .pill { background: #E8DEF8; }
+
+  .foot { text-align: center; margin-top: 30px; color: #79747E; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>AdCoin · Material 3 方案（深色 / 浅色）</h1>
+  <div class="sub">M3 语义色 + surfaceContainer 层级 + 12dp Card + pill 导航 + 矢量图标 · 品牌霓虹紫</div>
+
+  <div class="row">
+
+    <!-- ========== 方案 A：M3 深色（标准组件结构）========== -->
+    <div class="phone dark">
+      <div class="label">A · M3 深色 · 标准</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="appbar">
+          <div class="title">AdCoin</div>
+          <div class="subtitle">已绑定 · Steve</div>
+        </div>
+        <div class="pad">
+          <div class="card primary">
+            <div class="cap">ADCOINS 余额</div>
+            <div class="num">1,288</div>
+            <div class="unit">≈ 1,288 adcoins</div>
+          </div>
+          <div class="gap8"></div>
+          <button class="btn filled"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 看广告 · 赚 50 adcoins</button>
+          <div class="gap8"></div>
+          <div class="func">
+            <div class="item"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zM17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg><span>绑定</span></div>
+            <div class="item"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>好友</span></div>
+            <div class="item"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg><span>排行</span></div>
+          </div>
+          <div class="gap8"></div>
+          <div class="card">
+            <div class="cap">最近动态</div>
+            <div class="list-item" style="padding-top:8px"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="l">广告奖励</span><span class="r">+50</span></div>
+            <div class="list-item"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span class="l">转出给 Alex</span><span class="r out">-20</span></div>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="tab on"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>首页</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>好友</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>排行</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 方案 B：M3 浅色（含 Tonal/Outlined 按钮分级）========== -->
+    <div class="phone light">
+      <div class="label">B · M3 浅色 · 分层</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="appbar">
+          <div class="title">AdCoin</div>
+          <div class="subtitle">未绑定 · 去游戏内 /adlink</div>
+        </div>
+        <div class="pad">
+          <div class="card primary">
+            <div class="cap">ADCOINS 余额</div>
+            <div class="num">1,288</div>
+            <div class="unit">adcoins</div>
+          </div>
+          <div class="gap8"></div>
+          <button class="btn filled"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 看广告赚 50</button>
+          <div class="gap8"></div>
+          <button class="btn tonal"><svg class="icon" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zM17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg> 绑定游戏账号</button>
+          <div class="gap8"></div>
+          <div class="card">
+            <div class="cap">好友</div>
+            <div class="list-item" style="padding-top:8px"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span class="l">Alex · 在线</span><span class="r">转 20</span></div>
+            <div class="list-item"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span class="l">Notch · 离线</span><span class="r">1,500</span></div>
+          </div>
+          <div class="gap8"></div>
+          <button class="btn outlined"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg> 查看排行榜</button>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="tab on"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>首页</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>好友</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>排行</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 方案 C：M3 浅色 · 动态列表（最近动态优先）========== -->
+    <div class="phone light">
+      <div class="label">C · M3 · 动态时间线</div>
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span>●●● 📶</span></div>
+        <div class="appbar">
+          <div class="title">AdCoin</div>
+          <div class="subtitle">1,288 adcoins</div>
+        </div>
+        <div class="pad">
+          <button class="btn filled"><svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> 看广告 · +50 adcoins</button>
+          <div class="gap8"></div>
+          <div class="card">
+            <div class="cap">最近动态</div>
+            <div class="list-item" style="padding-top:8px"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="l">09:20 · 广告奖励</span><span class="r">+50</span></div>
+            <div class="list-item"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><span class="l">09:15 · 转出给 Alex</span><span class="r out">-20</span></div>
+            <div class="list-item"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="l">昨天 · 广告奖励</span><span class="r">+50</span></div>
+            <div class="list-item"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="l">昨天 · 广告奖励</span><span class="r">+50</span></div>
+            <div class="list-item" style="border-bottom:none"><div class="ic-tile"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zM17 7h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></div><span class="l">10 分钟前 · 绑定 Steve</span><span class="r">✓</span></div>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nav">
+          <div class="tab on"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></div>首页</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>好友</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5V21zM14.75 3h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg></div>排行</div>
+          <div class="tab"><div class="pill"><svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>我的</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="foot">AdCoin · Material 3（seed 霓虹紫 #7C3AED）· surfaceContainer 层级 · 图标为 Material Symbols 矢量路径</div>
+</body>
+</html>

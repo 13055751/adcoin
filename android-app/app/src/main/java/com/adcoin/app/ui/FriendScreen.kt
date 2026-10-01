@@ -1,9 +1,14 @@
 package com.adcoin.app.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -207,10 +212,30 @@ fun FriendScreen(session: Session?, onLoginRequest: () -> Unit) {
                             }
                             .padding(vertical = 6.dp),
                     ) {
-                        Text(
-                            if (f.online == true) "🟢 ${f.name ?: "?"}" else "⚪ ${f.name ?: "?"}",
-                            fontWeight = FontWeight.Medium,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(9.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (f.online == true) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outlineVariant
+                                    )
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                f.name ?: "?",
+                                fontWeight = FontWeight.Medium,
+                            )
+                            if (f.online == true) {
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "在线",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
                     }
                 }
                 if (friends.isNotEmpty()) {

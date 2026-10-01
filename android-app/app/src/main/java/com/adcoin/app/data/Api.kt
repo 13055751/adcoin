@@ -40,6 +40,9 @@ interface AdCoinApi {
     @GET("api/leaderboard")
     suspend fun leaderboard(@Header("Authorization") auth: String): LeaderboardResponse
 
+    @GET("api/transactions")
+    suspend fun transactions(@Header("Authorization") auth: String): TransactionsResponse
+
     @POST("api/transfer")
     suspend fun transfer(
         @Header("Authorization") auth: String,

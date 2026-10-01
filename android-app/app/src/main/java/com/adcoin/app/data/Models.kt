@@ -22,6 +22,9 @@ data class MeResponse(
     val ok: Boolean = false,
     val user: UserDto? = null,
     val balance: Double = 0.0,
+    val dailyUsed: Int = 0,
+    val dailyLimit: Int = 20,
+    val adReward: Double = 50.0,
     val linked: Boolean = false,
     val error: String? = null,
 )
@@ -96,5 +99,22 @@ data class TransferResponse(
     val fromBalance: Double? = null,
     val toBalance: Double? = null,
     val toName: String? = null,
+    val error: String? = null,
+)
+
+/** 账本条目（插件 /api/v1/ledger 经后端 /api/transactions）。 */
+data class TransactionEntry(
+    val txId: String? = null,
+    val amount: Double = 0.0,
+    val adNetwork: String? = null,
+    val adUnitId: String? = null,
+    val ts: Long = 0,
+    val fromAppUserId: String? = null,
+)
+
+data class TransactionsResponse(
+    val ok: Boolean = false,
+    val linked: Boolean = false,
+    val entries: List<TransactionEntry>? = null,
     val error: String? = null,
 )

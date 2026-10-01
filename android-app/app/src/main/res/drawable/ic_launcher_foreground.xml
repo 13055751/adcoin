@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 前景：金色播放币 + 星芒（内容集中在中心安全区） -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 金币 -->
+
+    <!-- 金币外圈 -->
     <path
         android:fillColor="#FFC107"
-        android:pathData="M54,54m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
+        android:pathData="M54,54 m-26,0 a26,26 0 1,1 52,0 a26,26 0 1,1 -52,0" />
+    <!-- 金币内圈（稍亮） -->
     <path
-        android:fillColor="#FFD54F"
-        android:pathData="M54,54m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
-    <!-- 播放（看广告）闪电 -->
+        android:fillColor="#FFE082"
+        android:pathData="M54,54 m-21,0 a21,21 0 1,1 42,0 a21,21 0 1,1 -42,0" />
+    <!-- 播放三角（看广告） -->
     <path
-        android:fillColor="#1B5E20"
-        android:pathData="M58,28 L42,56 L53,56 L49,80 L68,50 L56,50 Z" />
+        android:fillColor="#3D1A8B"
+        android:pathData="M48,42 L69,54 L48,66 Z" />
+    <!-- 星芒装饰 -->
+    <path
+        android:fillColor="#FFF3C4"
+        android:pathData="M76,26 L78.5,31.5 L84,34 L78.5,36.5 L76,42 L73.5,36.5 L68,34 L73.5,31.5 Z" />
+    <path
+        android:fillColor="#FFF3C4"
+        android:pathData="M30,72 L31.5,75.3 L34.8,76.8 L31.5,78.3 L30,81.6 L28.5,78.3 L25.2,76.8 L28.5,75.3 Z" />
 </vector>

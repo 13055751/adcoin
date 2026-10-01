@@ -36,4 +36,9 @@ export const pluginApi = {
     return callPlugin('/api/v1/top', {},
       (ts) => canonical.top(ts));
   },
+
+  ledger(appUserId) {
+    return callPlugin('/api/v1/ledger', { appUserId },
+      (ts) => canonical.ledger(appUserId, ts));
+  },
 };

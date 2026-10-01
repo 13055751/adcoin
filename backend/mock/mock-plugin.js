@@ -18,6 +18,7 @@ const bindings = new Map(); // appUserId -> {uuid, name}
 const codes = new Map();    // code -> {uuid, name}
 const friends = new Map();  // uuid -> Set<uuid>
 const ledger = new Set();   // txId
+const ledgerRows = [];      // 动态流：{playerUuid, txId, amount, adNetwork, ts, fromAppUserId?}
 
 let uid = 1;
 
@@ -36,6 +37,7 @@ app.post('/api/v1/reward', (req, res) => {
   ledger.add(txId);
   const nb = (balances.get(b.uuid) || 0) + amount;
   balances.set(b.uuid, nb);
+  ledgerRows.push({ playerUuid: b.uuid, txId, amount, adNetwork: req.body.adNetwork || 'mock', ts: Date.now() });
   res.json({ ok: true, credited: true, playerName: b.name, balance: nb });
 });
 
@@ -99,13 +101,22 @@ app.post('/api/v1/transfer', (req, res) => {
   ledger.add(txId);
   balances.set(fb.uuid, fromBal - amount);
   balances.set(tb.uuid, (balances.get(tb.uuid) || 0) + amount);
+  ledgerRows.push({ playerUuid: tb.uuid, txId, amount, adNetwork: 'transfer', ts: Date.now(), fromAppUserId });
   res.json({ ok: true, fromBalance: balances.get(fb.uuid), toBalance: balances.get(tb.uuid), toName: tb.name });
 });
 
 app.post('/api/v1/balance', (req, res) => {
   const b = bindings.get((req.body || {}).appUserId);
   if (!b) return res.json({ ok: true, linked: false });
-  res.json({ ok: true, linked: true, playerName: b.name, playerUuid: b.uuid, balance: balances.get(b.uuid) || 0 });
+  res.json({ ok: true, linked: true, playerName: b.name, playerUuid: b.uuid, balance: balances.get(b.uuid) || 0, dailyUsed: 3 });
+});
+
+app.post('/api/v1/ledger', (req, res) => {
+  const b = bindings.get((req.body || {}).appUserId);
+  if (!b) return res.json({ ok: true, linked: false, entries: [] });
+  const entries = ledgerRows.filter((r) => r.playerUuid === b.uuid).slice(-20)
+    .map(({ playerUuid, ...rest }) => rest);
+  res.json({ ok: true, linked: true, entries });
 });
 
 app.post('/api/v1/top', (req, res) => {
