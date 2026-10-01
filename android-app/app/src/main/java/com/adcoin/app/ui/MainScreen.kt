@@ -84,13 +84,19 @@ fun MainScreen(session: Session?, onLoginRequest: () -> Unit) {
                 NavigationBarItem(
                     selected = tab == 1,
                     onClick = { tab = 1 },
-                    icon = { Icon(Icons.Filled.People, null) },
-                    label = { Text("好友") },
-                    badge = {
-                        if (pendingCount > 0) {
-                            Badge { Text(pendingCount.toString()) }
+                    icon = {
+                        // material3 1.3.0 无 badge 参数，用 BadgedBox 包 icon
+                        androidx.compose.material3.BadgedBox(
+                            badge = {
+                                if (pendingCount > 0) {
+                                    Badge { Text(pendingCount.toString()) }
+                                }
+                            },
+                        ) {
+                            Icon(Icons.Filled.People, null)
                         }
                     },
+                    label = { Text("好友") },
                 )
                 NavigationBarItem(
                     selected = tab == 2,
