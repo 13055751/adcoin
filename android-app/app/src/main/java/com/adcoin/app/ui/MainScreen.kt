@@ -86,10 +86,10 @@ fun MainScreen(session: Session?, onLoginRequest: () -> Unit) {
                     onClick = { tab = 1 },
                     icon = { Icon(Icons.Filled.People, null) },
                     label = { Text("好友") },
-                    badge = if (pendingCount > 0) {
-                        { Badge { Text(pendingCount.toString()) } }
-                    } else {
-                        null
+                    badge = {
+                        if (pendingCount > 0) {
+                            Badge { Text(pendingCount.toString()) }
+                        }
                     },
                 )
                 NavigationBarItem(
