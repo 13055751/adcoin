@@ -74,24 +74,26 @@ class AdMobAdProvider implements AdProvider {
     void Function(String, String?) onReward,
     void Function(String) onError,
   ) async {
-    try {
-      final ad = await RewardedAd.load(
-        adUnitId: rewardedUnit,
-        request: const AdRequest(),
-      );
-      ad.fullScreenContentCallback = FullScreenContentCallback(
-        onAdFailedToShowFullScreenContent: (ad, err) {
-          ad.dispose();
-          onError('广告展示失败: $err');
+    // adLoadCallback 风格（google_mobile_ads v5~v9 通用），不依赖 load 的返回值
+    RewardedAd.load(
+      adUnitId: rewardedUnit,
+      request: const AdRequest(),
+      adLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdFailedToShowFullScreenContent: (ad, err) {
+              ad.dispose();
+              onError('广告展示失败: $err');
+            },
+            onAdDismissedFullScreenContent: (ad) => ad.dispose(),
+          );
+          ad.show(onUserEarnedReward: (ad, reward) {
+            onReward(_txId('admob'), rewardedUnit);
+          });
         },
-        onAdDismissedFullScreenContent: (ad) => ad.dispose(),
-      );
-      await ad.show(onUserEarnedReward: (ad, reward) {
-        onReward(_txId('admob'), rewardedUnit);
-      });
-    } catch (e) {
-      onError('广告加载失败: $e');
-    }
+        onAdFailedToLoad: (e) => onError('广告加载失败: ${e.message}'),
+      ),
+    );
   }
 }
 
