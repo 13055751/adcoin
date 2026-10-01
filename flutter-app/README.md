@@ -19,7 +19,12 @@ flutter create --org com.adcoin --project-name adcoin --platforms android /tmp/g
 flutter build apk --debug --dart-define=API_BASE_URL=... --dart-define=AD_MODE=...
 ```
 
-产物 artifact：`adcoin-apk`。
+产物（两种获取方式）：
+
+1. **Release 固定地址**（推荐，公开仓库 + gh-proxy 镜像加速，每次构建自动覆盖）：
+   - 直链：`https://github.com/13055751/adcoin/releases/download/latest-apk/app-debug.apk`
+   - 镜像（国内快）：`https://gh-proxy.com/https://github.com/13055751/adcoin/releases/download/latest-apk/app-debug.apk`
+2. Actions Artifacts 里的 `adcoin-apk`（需 token，慢时用方式 1）。
 
 ## 构建参数（--dart-define）
 
