@@ -260,3 +260,17 @@ class GenericResult {
   factory GenericResult.fromJson(Map<String, dynamic> j) =>
       GenericResult(ok: j['ok'] == true, error: j['error'] as String?);
 }
+
+class BindResult {
+  final bool ok;
+  final UserDto? user;
+  final String? error;
+
+  const BindResult({required this.ok, this.user, this.error});
+
+  factory BindResult.fromJson(Map<String, dynamic> j) => BindResult(
+        ok: j['ok'] == true,
+        user: j['user'] is Map<String, dynamic> ? UserDto.fromJson(j['user']) : null,
+        error: j['error'] as String?,
+      );
+}

@@ -3,6 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'api_client.dart';
 import 'main_shell.dart';
+import 'models.dart';
 import 'session_store.dart';
 
 Future<void> main() async {

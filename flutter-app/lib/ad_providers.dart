@@ -74,11 +74,11 @@ class AdMobAdProvider implements AdProvider {
     void Function(String, String?) onReward,
     void Function(String) onError,
   ) async {
-    // adLoadCallback 风格（google_mobile_ads v5~v9 通用），不依赖 load 的返回值
+    // google_mobile_ads 9.1.0: Future<void> load({adUnitId, request, rewardedAdLoadCallback})
     RewardedAd.load(
       adUnitId: rewardedUnit,
       request: const AdRequest(),
-      adLoadCallback: RewardedAdLoadCallback(
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           ad.fullScreenContentCallback = FullScreenContentCallback(
             onAdFailedToShowFullScreenContent: (ad, err) {
