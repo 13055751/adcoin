@@ -52,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (s == null)
-                        _row(context, '登录状态', '未登录（演示模式）')
+                        _row(context, '连接状态', '未连接后端（演示模式）')
                       else ...[
                         _row(context, '用户名', s.username),
                         _row(context, 'App ID', s.appUserId),
@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: onLoginRequest,
-                    child: const Text('登录 / 注册'),
+                    child: const Text('重试连接后端（自动创建匿名账号）'),
                   ),
                 )
               else ...[
@@ -110,14 +110,17 @@ class ProfileScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () => SessionStore.clear(),
-                    child: const Text('退出登录'),
+                    onPressed: () async {
+                      await SessionStore.clear();
+                      await SessionStore.ensureAnonymousAccount();
+                    },
+                    child: const Text('重置匿名账号'),
                   ),
                 ),
               ],
               const SizedBox(height: 16),
               Text(
-                '未部署后端也能用演示模式浏览；登录后可用真实余额、好友与转账。',
+                '无需注册：首次启动自动创建匿名账号；换手机回游戏重新扫码即可。未部署后端时用演示模式浏览。',
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall

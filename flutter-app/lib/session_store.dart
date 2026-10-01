@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'api_client.dart';
 import 'models.dart';
 
 /// 登录会话（shared_preferences 持久化 + ValueNotifier 供 UI 监听）。
@@ -25,6 +26,28 @@ class SessionStore {
       appUserId: sp.getString(_kAppUserId) ?? '',
       linkedPlayerName: sp.getString(_kLinkedName),
     );
+  }
+
+  /// 静默注册匿名设备账号（无 UI，玩家无感）；已登录/后端不可达时直接返回。
+  /// 启动与"重连"都调用它——后端恢复后重试即可拿到账号。
+  static Future<void> ensureAnonymousAccount() async {
+    if (session.value != null) return;
+    try {
+      final hex = List.generate(
+              12, (_) => '0123456789abcdef'[DateTime.now().microsecondsSinceEpoch % 16])
+          .join();
+      final res = await ApiClient().register('u_$hex', 'pw_$hex${hex.length}x9k');
+      if (res.ok && res.token != null) {
+        await save(Session(
+          token: res.token!,
+          username: res.user?.username ?? 'u_$hex',
+          appUserId: res.user?.appUserId ?? '',
+          linkedPlayerName: res.user?.linkedPlayerName,
+        ));
+      }
+    } catch (_) {
+      // 后端不可达：保持游客（演示数据）模式，横幅可重试
+    }
   }
 
   static Future<void> save(Session s) async {

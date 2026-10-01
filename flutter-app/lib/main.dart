@@ -8,7 +8,9 @@ import 'session_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SessionStore.load(); // 启动时恢复会话（未登录 = 游客模式）
+  await SessionStore.load(); // 恢复本地会话
+  // 静默注册匿名账号（无登录 UI；后端不可达时保持游客演示模式）
+  await SessionStore.ensureAnonymousAccount();
   if (kAdMode.toLowerCase() == 'admob') {
     // AdMob 模式才初始化（需 manifest 里 APPLICATION_ID，由 CI 补丁注入）
     try {

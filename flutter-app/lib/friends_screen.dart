@@ -276,7 +276,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
           )),
       if (_friends.isNotEmpty)
-        Text('点击好友可转账${guest ? '（演示模式需先登录）' : ''}',
+        Text('点击好友可转账${guest ? '（演示数据，需连接后端）' : ''}',
             style:
                 Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
     ];

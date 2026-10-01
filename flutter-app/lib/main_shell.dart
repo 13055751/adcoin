@@ -4,7 +4,6 @@ import 'api_client.dart';
 import 'friends_screen.dart';
 import 'home_screen.dart';
 import 'leaderboard_screen.dart';
-import 'login_screen.dart';
 import 'models.dart';
 import 'profile_screen.dart';
 import 'session_store.dart';
@@ -50,11 +49,8 @@ class _MainShellState extends State<MainShell> {
     }
   }
 
-  void _openLogin() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
-  }
+  /// 无登录 UI：重试静默注册（后端恢复后自动拿到匿名账号）。
+  Future<void> _retryConnect() => SessionStore.ensureAnonymousAccount();
 
   @override
   Widget build(BuildContext context) {
@@ -63,13 +59,13 @@ class _MainShellState extends State<MainShell> {
       HomeScreen(
         session: widget.session,
         pendingCount: _pendingCount,
-        onLoginRequest: _openLogin,
+        onLoginRequest: _retryConnect,
         onNavigate: (i) => setState(() => _tab = i),
         onBadgeChanged: () => _refreshBadge(),
       ),
-      FriendsScreen(session: widget.session, onLoginRequest: _openLogin),
+      FriendsScreen(session: widget.session, onLoginRequest: _retryConnect),
       LeaderboardScreen(session: widget.session),
-      ProfileScreen(session: widget.session, onLoginRequest: _openLogin),
+      ProfileScreen(session: widget.session, onLoginRequest: _retryConnect),
     ];
     return Scaffold(
       appBar: guest
@@ -80,13 +76,13 @@ class _MainShellState extends State<MainShell> {
                 children: [
                   Expanded(
                     child: Text(
-                      '未登录 · 演示数据（功能需登录后可用）',
+                      '未连接后端 · 演示数据（绑定/扫码可用）',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
                   TextButton(
-                    onPressed: _openLogin,
-                    child: const Text('登录/注册'),
+                    onPressed: _retryConnect,
+                    child: const Text('重连'),
                   ),
                 ],
               ),

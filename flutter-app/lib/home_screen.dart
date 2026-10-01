@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _watchAd() async {
     final s = widget.session;
     if (s == null) {
-      _snack('演示模式：登录后才能看广告赚币');
+      _snack('未连接后端：暂时无法领取广告奖励（可点横幅"重连"）');
       widget.onLoginRequest();
       return;
     }
@@ -172,6 +172,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openBindDialog() async {
+    // 游客打开绑定弹窗时后台静默注册（扫码/输码/账密都能用）
+    if (widget.session == null) {
+      SessionStore.ensureAnonymousAccount();
+    }
     final controller = TextEditingController();
     final code = await showDialog<String>(
       context: context,
@@ -229,6 +233,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (code == null) return;
+    if (widget.session == null) {
+      // 匿名账号还没注册完（后端刚连上/游客刚触发）
+      SessionStore.ensureAnonymousAccount();
+      _snack('正在连接后端，账号就绪后请再点一次"绑定"');
+      return;
+    }
     try {
       final res = await _api.bind(code);
       if (res.ok) {
@@ -344,12 +354,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600)),
                 const Spacer(),
-                if (guest)
-                  TextButton(
-                    onPressed: widget.onLoginRequest,
-                    child: const Text('登录/注册', style: TextStyle(fontWeight: FontWeight.bold)),
-                  )
-                else ...[
+                if (!guest) ...[
                   _IconDotButton(
                     icon: Icons.notifications_outlined,
                     filled: widget.pendingCount > 0,
@@ -497,7 +502,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icons.people_outline,
                     value: '$vFriendCount 位好友',
                     sub: '$vFriendOnline 人在线',
-                    onTap: guest ? widget.onLoginRequest : () => widget.onNavigate(1),
+                    onTap: () {
+                      if (guest) {
+                        _snack('未连接后端：好友功能暂不可用（可点横幅"重连"）');
+                        widget.onLoginRequest();
+                      } else {
+                        widget.onNavigate(1);
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -516,11 +528,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     value: vLinked != null ? '已绑定' : '未绑定',
                     sub: vLinked ?? '去绑定',
                     onTap: () {
-                      if (guest) {
-                        widget.onLoginRequest();
-                      } else if (vLinked != null) {
+                      if (vLinked != null) {
                         _snack('已绑定 $vLinked，解绑去「我的」');
                       } else {
+                        // 游客也可直接打开绑定弹窗（输码 / 扫码 / 账密三入口）
                         _openBindDialog();
                       }
                     },
